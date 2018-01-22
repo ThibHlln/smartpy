@@ -17,6 +17,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Thibault's preferences
+*.pyc
+
 # =========================
 # Operating System Files
 # =========================
