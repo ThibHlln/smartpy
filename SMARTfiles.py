@@ -41,6 +41,54 @@ def get_dict_discharge_series(file_location, start_report, end_report):
     return dict_flow
 
 
+def get_dict_simulation_settings(file_location):
+    my_dict_args = read_simulation_file(file_location)
+
+    try:
+        area = float(my_dict_args["area_km2"])
+    except KeyError:
+        raise Exception('Setting AREA is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting AREA could not be converted to an integer.')
+
+    try:
+        start = datetime.strptime(my_dict_args["start_datetime"], '%d/%m/%Y %H:%M:%S')
+    except KeyError:
+        raise Exception('Setting START is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting START could not be converted to a datetime [format required: DD/MM/YYYY HH:MM:SS].')
+
+    try:
+        end = datetime.strptime(my_dict_args["end_datetime"], '%d/%m/%Y %H:%M:%S')
+    except KeyError:
+        raise Exception('Setting END is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting END could not be converted to a datetime [format required: DD/MM/YYYY HH:MM:SS].')
+
+    try:
+        delta_simu = timedelta(minutes=int(my_dict_args["simu_timedelta_min"]))
+    except KeyError:
+        raise Exception('Setting DELTA SIMU is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting DELTA SIMU could not be converted to an integer/timedelta.')
+
+    try:
+        delta_report = timedelta(minutes=int(my_dict_args["report_timedelta_min"]))
+    except KeyError:
+        raise Exception('Setting DELTA REPORT is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting DELTA REPORT could not be converted to an integer/timedelta.')
+
+    try:
+        warm_up = int(my_dict_args["warm_up_days"])
+    except KeyError:
+        raise Exception('Setting WARM UP DURATION is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting WARM UP DURATION could not be converted to an integer.')
+
+    return area, start, end, delta_simu, delta_report, warm_up
+
+
 def read_rain_file(file_location):
     return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='RAIN')
 
@@ -51,6 +99,21 @@ def read_peva_file(file_location):
 
 def read_flow_file(file_location):
     return read_csv_time_series_with_missing_check(file_location, key_header='DATETIME', val_header='FLOW')
+
+
+def read_simulation_file(file_location):
+    my_dict_args = dict()
+    try:
+        with open(file_location, 'rb') as my_file:
+            my_reader = DictReader(my_file)
+            for row in my_reader:
+                my_dict_args[row['ARGUMENT']] = row['VALUE']
+    except KeyError:
+        raise Exception("There is 'ARGUMENT' or 'VALUE' column in {}.".format(file_location))
+    except IOError:
+        raise Exception("There is no simulation file at {}.".format(file_location))
+
+    return my_dict_args
 
 
 def read_csv_time_series_with_delta_check(csv_file, key_header, val_header):
