@@ -42,7 +42,7 @@ def get_dict_discharge_series(file_location, start_report, end_report):
 
 
 def get_dict_simulation_settings(file_location):
-    my_dict_args = read_simulation_file(file_location)
+    my_dict_args = read_simulation_settings_file(file_location)
 
     try:
         area = float(my_dict_args["area_km2"])
@@ -101,7 +101,7 @@ def read_flow_file(file_location):
     return read_csv_time_series_with_missing_check(file_location, key_header='DATETIME', val_header='FLOW')
 
 
-def read_simulation_file(file_location):
+def read_simulation_settings_file(file_location):
     my_dict_args = dict()
     try:
         with open(file_location, 'rb') as my_file:
