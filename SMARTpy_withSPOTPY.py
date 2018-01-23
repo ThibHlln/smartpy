@@ -53,12 +53,12 @@ class SpotPySetUp(object):
         return - spotpy.objectivefunctions.rmse(evaluation, simulation)
 
 
-def spotpy_instructions(catchment, sample_size):
+def spotpy_instructions(catchment, sample_size, parallel):
 
     spotpy_setup = SpotPySetUp(catchment)
 
     sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + 'LHS_SMART',
-                                    dbformat='csv', parallel='seq')
+                                    dbformat='csv', parallel=parallel)
     sampler.sample(sample_size)
 
     results = sampler.getdata()
@@ -73,6 +73,18 @@ if __name__ == '__main__':
                         help="name of the catchment")
     parser.add_argument('sample_size', type=int,
                         help="size of the sample")
+    parser.add_argument('-s', '--sequence', dest='parallelisation', action='store_false',
+                        help="compute each sample in sequence ")
+    parser.add_argument('-p', '--parallel', dest='parallelisation', action='store_true',
+                        help="parallel computing of the sample  ")
+    parser.set_defaults(parallelisation=False)
     args = parser.parse_args()
+
+    # send the relevant argument for parallelisation option
+    if args.parallelisation:
+        parallelisation = 'mpi'  # use MPI and parallel computing
+    else:
+        parallelisation = 'seq'  # use traditional sequential computing
+
     # Call main function containing SPOTPY instructions
-    spotpy_instructions(args.catchment, args.sample_size)
+    spotpy_instructions(args.catchment, args.sample_size, parallelisation)
