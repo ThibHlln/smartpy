@@ -1,20 +1,18 @@
 import spotpy
-from os import path
-from datetime import datetime, timedelta
+import argparse
+from os import path, sep
 
 from SMARTpy import SMART
+from SMARTfiles import get_dict_simulation_settings
 
 
 class SpotPySetUp(object):
-    def __init__(self):
-        catchment = 'Avonmore_l_IE_EA_10A050300'
-        area = 230.41164787028104
-        start = datetime(2011, 1, 1, 9, 0, 0)
-        end = datetime(2016, 12, 31, 9, 0, 0)
-        delta_simu = timedelta(minutes=60)
-        delta_report = timedelta(minutes=1440)
-        warm_up = 365
+    def __init__(self, catchment):
         root_f = path.realpath('..')
+        in_f = sep.join([root_f, 'in', catchment, sep])
+
+        area, start, end, delta_simu, delta_report, warm_up = \
+            get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
         self.model = SMART(catchment, area, start, end, delta_simu, delta_report, warm_up, root_f)
 
@@ -55,12 +53,26 @@ class SpotPySetUp(object):
         return - spotpy.objectivefunctions.rmse(evaluation, simulation)
 
 
-if __name__ == '__main__':
+def spotpy_instructions(catchment, sample_size):
 
-    spotpy_setup = SpotPySetUp()
+    spotpy_setup = SpotPySetUp(catchment)
 
-    sampler = spotpy.algorithms.lhs(spotpy_setup, dbname='C:/PycharmProjects/Python/SMARTpy/out/LHS_SMART',
+    sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + 'LHS_SMART',
                                     dbformat='csv', parallel='seq')
+    sampler.sample(sample_size)
 
-    sampler.sample(5)
     results = sampler.getdata()
+
+
+if __name__ == '__main__':
+    # Collect the arguments to set up SPOTPY
+    parser = argparse.ArgumentParser(description="simulate lumped catchment hydrology"
+                                                 "for one catchment and one time period"
+                                                 "using SPOTPY")
+    parser.add_argument('catchment', type=str,
+                        help="name of the catchment")
+    parser.add_argument('sample_size', type=int,
+                        help="size of the sample")
+    args = parser.parse_args()
+    # Call main function containing SPOTPY instructions
+    spotpy_instructions(args.catchment, args.sample_size)
