@@ -43,42 +43,42 @@ def get_dict_discharge_series(file_location, start_report, end_report):
 
 def get_dict_simulation_settings(file_location):
     my_dict_args = read_simulation_settings_file(file_location)
-
+    # AREA [float, m2]
     try:
-        area = float(my_dict_args["area_km2"])
+        area = float(my_dict_args["area_km2"]) * 1e6
     except KeyError:
         raise Exception('Setting AREA is missing from simulation file.')
     except ValueError:
         raise Exception('Setting AREA could not be converted to an integer.')
-
+    # START SIMULATION [datetime]
     try:
         start = datetime.strptime(my_dict_args["start_datetime"], '%d/%m/%Y %H:%M:%S')
     except KeyError:
         raise Exception('Setting START is missing from simulation file.')
     except ValueError:
         raise Exception('Setting START could not be converted to a datetime [format required: DD/MM/YYYY HH:MM:SS].')
-
+    # END SIMULATION [datetime]
     try:
         end = datetime.strptime(my_dict_args["end_datetime"], '%d/%m/%Y %H:%M:%S')
     except KeyError:
         raise Exception('Setting END is missing from simulation file.')
     except ValueError:
         raise Exception('Setting END could not be converted to a datetime [format required: DD/MM/YYYY HH:MM:SS].')
-
+    # SIMULATION TIME STEP [timedelta]
     try:
         delta_simu = timedelta(minutes=int(my_dict_args["simu_timedelta_min"]))
     except KeyError:
         raise Exception('Setting DELTA SIMU is missing from simulation file.')
     except ValueError:
         raise Exception('Setting DELTA SIMU could not be converted to an integer/timedelta.')
-
+    # REPORTING TIME STEP [timedelta]
     try:
         delta_report = timedelta(minutes=int(my_dict_args["report_timedelta_min"]))
     except KeyError:
         raise Exception('Setting DELTA REPORT is missing from simulation file.')
     except ValueError:
         raise Exception('Setting DELTA REPORT could not be converted to an integer/timedelta.')
-
+    # WARM-UP DURATION [int, days]
     try:
         warm_up = int(my_dict_args["warm_up_days"])
     except KeyError:
