@@ -143,7 +143,7 @@ def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
             my_reader = DictReader(my_file)
             try:
                 for row in my_reader:
-                    if row[val_header] != -99.0:
+                    if float64(row[val_header]) != -99.0:
                         my_dict_data[datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S")] = float64(row[val_header])
             except KeyError:
                 raise Exception('Field {} or {} does not exist in {}.'.format(key_header, val_header, csv_file))
