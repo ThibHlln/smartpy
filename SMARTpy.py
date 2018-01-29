@@ -7,6 +7,7 @@ from SMARTfiles import \
 from SMARTparameters import get_parameters_from_file
 from SMARTstructure import run
 from SMARTtime import TimeFrame
+from SMARTobjective import calculate_obj_fn
 
 
 class SMART(object):
@@ -27,6 +28,7 @@ class SMART(object):
         self.delta_report = time_delta_report
         self.timeframe = TimeFrame(self.start, self.end, self.delta_simu, self.delta_report)
         self.timeseries = self.timeframe.get_series_simu()
+        self.timeseries_report = self.timeframe.get_series_report()
         self.warm_up = warm_up_days
         # physical information
         self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain']),
@@ -40,7 +42,8 @@ class SMART(object):
     def simulate(self, parameters):
         db = dict()
         return run(self.area, self.delta_simu, self.rain, self.peva,
-                   parameters, db, self.timeseries, warm_up=self.warm_up)
+                   parameters, db, self.timeseries, self.timeseries_report,
+                   warm_up=self.warm_up)
 
 
 def simulate(catchment_id, area_m2,
@@ -56,10 +59,18 @@ def simulate(catchment_id, area_m2,
     db = dict()
 
     # simulate
-    dict_discharge = smart_model.simulate(parameters)
+    dict_discharge, gw_ratio = smart_model.simulate(parameters)
 
     write_flow_file_from_dict(smart_model.timeframe, dict_discharge,
-                              ''.join([smart_model.out_f, catchment_id, '.flow']))
+                              ''.join([smart_model.out_f, catchment_id, '.flow']),
+                              method='raw')
+
+    # calculate objective function
+    obs = [observation for observation in smart_model.flow.itervalues()]
+    mod = [dict_discharge[dt] for dt in smart_model.flow.iterkeys()]
+
+    nse = calculate_obj_fn(mod, obs, method='nse')
+    print nse, gw_ratio
 
     # explicit garbage collection
     del db

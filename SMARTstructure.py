@@ -3,7 +3,8 @@
 def run(area_m2, delta,
         rain, peva,
         parameters,
-        database, timeseries,
+        database, timeseries, timeseries_report,
+        report='summary',
         **kwargs):
     """
     This function defines the structure of the database using model outputs and states names
@@ -17,6 +18,8 @@ def run(area_m2, delta,
     :param parameters:
     :param database:
     :param timeseries:
+    :param timeseries_report:
+    :param report:
     :param kwargs:
     :return:
     """
@@ -34,7 +37,7 @@ def run(area_m2, delta,
                       rain, peva,
                       parameters,
                       database_wu,
-                      timeseries[0:warm_up_end_index])
+                      timeseries[0:warm_up_end_index], timeseries_report, report)
         database[timeseries[0]] = database_wu[timeseries[warm_up_end_index - 1]]
     else:  # or starting with empty reservoirs
         database[timeseries[0]] = {name: 0.0 for name in model_states_reservoirs + model_outputs}
@@ -45,14 +48,14 @@ def run(area_m2, delta,
                          rain, peva,
                          parameters,
                          database,
-                         timeseries)
+                         timeseries, timeseries_report, report)
 
 
 def run_all_steps(area_m2, delta,
                   rain, peva,
                   parameters,
-                  database, timeseries
-                  ):
+                  database, timeseries, timeseries_report,
+                  report):
     """
     This function calls the hydrological model (run_one_step) for all the time steps in the period in sequence.
     It returns the simulated discharge at the outlet for the simulation period.
@@ -64,13 +67,17 @@ def run_all_steps(area_m2, delta,
     :param parameters:
     :param database:
     :param timeseries:
+    :param timeseries_report:
+    :param report:
     :return:
     """
     discharge = dict()
-
+    q_out = list()
+    q_ove, q_dra, q_int, q_sgw, q_dgw = 0.0, 0.0, 0.0, 0.0, 0.0
+    i_report = 1
     for dt in timeseries[1:]:
         database[dt] = dict()
-        database[dt]['Q_aeva'], database[dt]['Q_int'], database[dt]['Q_dra'], database[dt]['Q_int'], \
+        database[dt]['Q_aeva'], database[dt]['Q_ove'], database[dt]['Q_dra'], database[dt]['Q_int'], \
             database[dt]['Q_sgw'], database[dt]['Q_dgw'], database[dt]['Q_out'], \
             database[dt]['V_ove'], database[dt]['V_dra'], database[dt]['V_int'], \
             database[dt]['V_sgw'], database[dt]['V_dgw'], database[dt]['V_ly1'], \
@@ -87,9 +94,24 @@ def run_all_steps(area_m2, delta,
                 database[dt - delta]['V_ly5'], database[dt - delta]['V_ly6'], database[dt - delta]['V_river']
             )
 
-        discharge[dt] = database[dt]['Q_out']
+        q_out.append(database[dt]['Q_out'])
+        q_ove += database[dt]['Q_ove']
+        q_dra += database[dt]['Q_dra']
+        q_int += database[dt]['Q_int']
+        q_sgw += database[dt]['Q_sgw']
+        q_dgw += database[dt]['Q_dgw']
 
-    return discharge
+        if dt == timeseries_report[i_report]:
+            if report == 'summary':
+                discharge[dt] = sum(q_out) / len(q_out)
+                del q_out[:]
+                i_report += 1
+            elif report == 'raw':
+                discharge[dt] = database[dt]['Q_out']
+                del q_out[:]
+                i_report += 1
+
+    return discharge, (q_sgw + q_dgw) / (q_ove + q_dra + q_int + q_sgw + q_dgw)
 
 
 def run_one_step(area_m2, time_delta,
