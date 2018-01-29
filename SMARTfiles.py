@@ -85,8 +85,15 @@ def get_dict_simulation_settings(file_location):
         raise Exception('Setting WARM UP DURATION is missing from simulation file.')
     except ValueError:
         raise Exception('Setting WARM UP DURATION could not be converted to an integer.')
+    # GROUNDWATER CONSTRAINT [float]
+    try:
+        gw_constraint = float(my_dict_args["gw_constraint"])
+    except KeyError:
+        gw_constraint = -999.0  # i.e. no simulation constraint required
+    except ValueError:
+        raise Exception('Setting GROUNDWATER CONSTRAINT could not be converted to a float.')
 
-    return area, start, end, delta_simu, delta_report, warm_up
+    return area, start, end, delta_simu, delta_report, warm_up, gw_constraint
 
 
 def read_rain_file(file_location):
