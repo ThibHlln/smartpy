@@ -4,6 +4,7 @@ from os import path, sep
 
 from SMARTpy import SMART
 from SMARTfiles import get_dict_simulation_settings
+from SMARTobjective import groundwater_constraint
 
 
 class SpotPySetUp(object):
@@ -11,10 +12,12 @@ class SpotPySetUp(object):
         root_f = path.realpath('..')
         in_f = sep.join([root_f, 'in', catchment, sep])
 
-        area, start, end, delta_simu, delta_report, warm_up = \
+        area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
             get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
         self.model = SMART(catchment, area, start, end, delta_simu, delta_report, warm_up, root_f)
+
+        self.constraints = {'gw': gw_constraint}
 
         # attribute params is a list of Objects (e.g. Uniform, Normal; all having Base as a parent class)
         # that are callable (where __call__ of Base picks what numpy.random function to use)
@@ -39,18 +42,23 @@ class SpotPySetUp(object):
         return spotpy.parameter.generate(self.params)
 
     def simulation(self, vector):
-        simulations = self.model.simulate({
+        simulations, constraint = self.model.simulate({
             'T': vector[0], 'C': vector[1], 'H': vector[2], 'D': vector[3], 'S': vector[4], 'Z': vector[5],
             'SK': vector[6], 'FK': vector[7], 'GK': vector[8], 'RK': vector[9]
         })
         # returns only simulations with observations
-        return [simulations[dt] for dt in self.model.flow.iterkeys()]
+        return [[simulations[dt] for dt in self.model.flow.iterkeys()], [constraint]]
 
     def evaluation(self):
-        return [observation for observation in self.model.flow.itervalues()]
+        return [[observation for observation in self.model.flow.itervalues()], [self.constraints['gw']]]
 
     def objectivefunction(self, simulation, evaluation):
-        return - spotpy.objectivefunctions.rmse(evaluation, simulation)
+        obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj2 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+        if self.constraints['gw'] == -999.0:
+            return obj1
+        else:
+            return [obj1, obj2]
 
 
 def spotpy_instructions(catchment, sample_size, parallel):
@@ -58,7 +66,7 @@ def spotpy_instructions(catchment, sample_size, parallel):
     spotpy_setup = SpotPySetUp(catchment)
 
     sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + 'LHS_SMART',
-                                    dbformat='csv', parallel=parallel)
+                                    dbformat='csv', parallel=parallel, save_sim=False)
     sampler.sample(sample_size)
 
     results = sampler.getdata()
