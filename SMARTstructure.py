@@ -32,7 +32,8 @@ def run(area_m2, delta,
     if kwargs['warm_up'] != 0:  # either using warm-up run
         warm_up_end_index = int(kwargs['warm_up']*86400 / delta.total_seconds())
         database_wu = {timeseries[0]: {name: 0.0 for name in model_states_reservoirs + model_outputs}}
-        database_wu[timeseries[0]].update({name: parameters['Z'] / 12 for name in model_states_soil_layers})
+        database_wu[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
+                                           for name in model_states_soil_layers})
         run_all_steps(area_m2, delta,
                       rain, peva,
                       parameters,
@@ -41,7 +42,8 @@ def run(area_m2, delta,
         database[timeseries[0]] = database_wu[timeseries[warm_up_end_index - 1]]
     else:  # or starting with empty reservoirs
         database[timeseries[0]] = {name: 0.0 for name in model_states_reservoirs + model_outputs}
-        database[timeseries[0]].update({name: parameters['Z'] / 12 for name in model_states_soil_layers})
+        database[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
+                                        for name in model_states_soil_layers})
 
     # run the actual simulation
     return run_all_steps(area_m2, delta,
