@@ -26,7 +26,7 @@ def nash_sutcliffe(evaluation, simulation):
 
 
 def groundwater_constraint(evaluation, simulation):
-    if (evaluation[0] - 0.1 <= simulation[0]) or (simulation[0] <= evaluation[0] + 0.1):
+    if (evaluation[0] - 0.1 <= simulation[0]) and (simulation[0] <= evaluation[0] + 0.1):
         return 1.0
     else:
         return 0.0
