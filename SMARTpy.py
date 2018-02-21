@@ -104,8 +104,6 @@ if __name__ == '__main__':
                                                  "for one catchment and one time period")
     parser.add_argument('catchment', type=str,
                         help="name of the catchment")
-    parser.add_argument('outlet', type=str,
-                        help="european code of the catchment outlet [format IE_XX_##X######]")
     parser.add_argument('start', type=valid_date,
                         help="simulation start date and time [format DD/MM/YYYY_HH:MM:SS]")
     parser.add_argument('end', type=valid_date,
@@ -124,7 +122,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Run the main() function
-    simulate('_'.join([args.catchment.capitalize(), args.outlet.upper()]),
+    simulate(args.catchment,
              args.catchment_area * 1E6, args.gauged_area * 1E6,
              args.start, args.end, args.delta_simu, args.delta_report, args.warm_up,
              smart_root)
