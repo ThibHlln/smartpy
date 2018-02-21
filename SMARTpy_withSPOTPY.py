@@ -12,10 +12,10 @@ class SpotPySetUp(object):
         root_f = path.realpath('..')
         in_f = sep.join([root_f, 'in', catchment, sep])
 
-        area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
+        c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
             get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
-        self.model = SMART(catchment, area, start, end, delta_simu, delta_report, warm_up, root_f)
+        self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, root_f)
 
         self.constraints = {'gw': gw_constraint}
 

@@ -31,25 +31,36 @@ def get_dict_peva_series_simu(file_location, start_simu, end_simu, time_delta_si
         raise Exception('PEva data not sufficient for simulation.')
 
 
-def get_dict_discharge_series(file_location, start_report, end_report):
+def get_dict_discharge_series(file_location, start_report, end_report, catchment_area, gauged_area):
     dict_flow = read_flow_file(file_location)
+
+    scaling_factor = catchment_area / gauged_area
 
     for dt in dict_flow.iterkeys():
         if not ((start_report <= dt) and (dt <= end_report)):
             del dict_flow[dt]
+        else:
+            dict_flow[dt] *= scaling_factor
 
     return dict_flow
 
 
 def get_dict_simulation_settings(file_location):
     my_dict_args = read_simulation_settings_file(file_location)
-    # AREA [float, m2]
+    # CATCHMENT AREA [float, m2]
     try:
-        area = float(my_dict_args["area_km2"]) * 1e6
+        c_area = float(my_dict_args["catchment_area_km2"]) * 1e6
     except KeyError:
-        raise Exception('Setting AREA is missing from simulation file.')
+        raise Exception('Setting CATCHMENT AREA is missing from simulation file.')
     except ValueError:
-        raise Exception('Setting AREA could not be converted to an integer.')
+        raise Exception('Setting CATCHMENT AREA could not be converted to a float.')
+    # GAUGED AREA [float, m2]
+    try:
+        g_area = float(my_dict_args["gauged_area_km2"]) * 1e6
+    except KeyError:
+        raise Exception('Setting GAUGED AREA is missing from simulation file.')
+    except ValueError:
+        raise Exception('Setting GAUGED AREA could not be converted to a float.')
     # START SIMULATION [datetime]
     try:
         start = datetime.strptime(my_dict_args["start_datetime"], '%d/%m/%Y %H:%M:%S')
@@ -93,7 +104,7 @@ def get_dict_simulation_settings(file_location):
     except ValueError:
         raise Exception('Setting GROUNDWATER CONSTRAINT could not be converted to a float.')
 
-    return area, start, end, delta_simu, delta_report, warm_up, gw_constraint
+    return c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint
 
 
 def read_rain_file(file_location):
@@ -116,7 +127,7 @@ def read_simulation_settings_file(file_location):
             for row in my_reader:
                 my_dict_args[row['ARGUMENT']] = row['VALUE']
     except KeyError:
-        raise Exception("There is 'ARGUMENT' or 'VALUE' column in {}.".format(file_location))
+        raise Exception("There is no 'ARGUMENT' or 'VALUE' column in {}.".format(file_location))
     except IOError:
         raise Exception("There is no simulation file at {}.".format(file_location))
 

@@ -11,10 +11,11 @@ from SMARTobjective import calculate_obj_fn
 
 
 class SMART(object):
-    def __init__(self, catchment, area_m2, start, end, time_delta_simu, time_delta_report, warm_up_days, root):
+    def __init__(self, catchment, c_area_m2, g_area_m2, start, end,
+                 time_delta_simu, time_delta_report, warm_up_days, root):
         # general information
         self.catchment = catchment
-        self.area = area_m2
+        self.area = c_area_m2
         # directory information
         self.root_f = root
         self.in_f = sep.join([self.root_f, 'in', self.catchment, sep])
@@ -37,7 +38,8 @@ class SMART(object):
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
                                               self.timeframe.get_series_report()[1],
-                                              self.timeframe.get_series_report()[-1])
+                                              self.timeframe.get_series_report()[-1],
+                                              c_area_m2, g_area_m2)
 
     def simulate(self, parameters):
         db = dict()
@@ -46,11 +48,12 @@ class SMART(object):
                    warm_up=self.warm_up)
 
 
-def simulate(catchment_id, area_m2,
+def simulate(catchment_id, c_area_m2, g_area_m2,
              start, end, time_delta_simu, time_delta_report, warm_up_days,
              root):
 
-    smart_model = SMART(catchment_id, area_m2, start, end, time_delta_simu, time_delta_report, warm_up_days, root)
+    smart_model = SMART(catchment_id, c_area_m2, g_area_m2, start, end,
+                        time_delta_simu, time_delta_report, warm_up_days, root)
 
     # get sets of parameters
     parameters = get_parameters_from_file(''.join([smart_model.in_f, smart_model.catchment, '.parameters']))
@@ -111,14 +114,17 @@ if __name__ == '__main__':
                         help="time delta for simulation in minutes")
     parser.add_argument('delta_report', type=valid_delta,
                         help="time delta for reporting in minutes")
-    parser.add_argument('area', type=float,
+    parser.add_argument('catchment_area', type=float,
                         help="catchment area in square kilometers")
+    parser.add_argument('gauged_area', type=float,
+                        help="area upstream of the hydrometric gauge in square kilometers")
     parser.add_argument('-w', '--warm_up', type=int, default=365,
                         help="warm-up duration in days")
 
     args = parser.parse_args()
 
     # Run the main() function
-    simulate('_'.join([args.catchment.capitalize(), args.outlet.upper()]), args.area * 1E6,
+    simulate('_'.join([args.catchment.capitalize(), args.outlet.upper()]),
+             args.catchment_area * 1E6, args.gauged_area * 1E6,
              args.start, args.end, args.delta_simu, args.delta_report, args.warm_up,
              smart_root)
