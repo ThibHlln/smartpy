@@ -161,8 +161,14 @@ def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
             my_reader = DictReader(my_file)
             try:
                 for row in my_reader:
-                    if float64(row[val_header]) != -99.0:
-                        my_dict_data[datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S")] = float64(row[val_header])
+                    try:
+                        if row[val_header] != '':  # not an empty string (that would mean missing data)
+                            if float64(row[val_header]) != -99.0:  # flag for missing data
+                                my_dict_data[datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S")] = \
+                                    float64(row[val_header])
+                    except ValueError:
+                        raise Exception('Field {} in {} cannot be converted to float '
+                                        'at {}.'.format(val_header, csv_file, row[key_header]))
             except KeyError:
                 raise Exception('Field {} or {} does not exist in {}.'.format(key_header, val_header, csv_file))
         return my_dict_data
