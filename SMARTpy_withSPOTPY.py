@@ -65,7 +65,7 @@ def spotpy_instructions(catchment, sample_size, parallel):
 
     spotpy_setup = SpotPySetUp(catchment)
 
-    sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + 'LHS_SMART',
+    sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + '{}_LHS_SMART'.format(catchment),
                                     dbformat='csv', parallel=parallel, save_sim=False)
     sampler.sample(sample_size)
 
