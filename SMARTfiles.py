@@ -32,15 +32,18 @@ def get_dict_peva_series_simu(file_location, start_simu, end_simu, time_delta_si
 
 
 def get_dict_discharge_series(file_location, start_report, end_report, catchment_area, gauged_area):
-    dict_flow = read_flow_file(file_location)
+    data_flow = read_flow_file(file_location)
 
     scaling_factor = catchment_area / gauged_area
 
-    for dt in dict_flow.iterkeys():
-        if not ((start_report <= dt) and (dt <= end_report)):
-            del dict_flow[dt]
-        else:
-            dict_flow[dt] *= scaling_factor
+    start_date = start_report.date()
+    end_date = end_report.date()
+
+    dict_flow = dict()
+    for dt in data_flow.iterkeys():
+        d = dt.date()
+        if (start_date <= d) and (d <= end_date):
+            dict_flow[dt.replace(hour=9)] = data_flow[dt] * scaling_factor
 
     return dict_flow
 
