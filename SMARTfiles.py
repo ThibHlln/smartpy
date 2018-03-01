@@ -254,7 +254,7 @@ def rescale_data_time_resolution(dict_data,
                                                     time_delta_data, time_delta_res)
     else:  # i.e. information resolution suitable to generate simu timeseries
         # i.e. time_delta_data == time_delta_res (time_delta_data < time_delta_res cannot be true because use of GCD)
-        my_tmp_dict = dict_data, start_data, end_data
+        my_tmp_dict = dict_data
 
     if time_delta_simu > time_delta_res:  # i.e. information resolution too high to generate simu timeseries
         my_new_dict = decrease_data_time_resolution(my_tmp_dict, start_simu, end_simu,
