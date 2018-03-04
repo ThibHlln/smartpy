@@ -30,7 +30,7 @@ def run(area_m2, delta,
 
     # set initial conditions
     if kwargs['warm_up'] != 0:  # either using warm-up run
-        warm_up_end_index = int(kwargs['warm_up']*86400 / delta.total_seconds())
+        warm_up_end_index = int(kwargs['warm_up'] * 86400 / delta.total_seconds()) + 1
         database_wu = {timeseries[0]: {name: 0.0 for name in model_outputs}}
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 60/30/10% GW/Soil/Surface)
         database_wu[timeseries[0]].update({'V_river': (1200 * 0.45) / 1000 * area_m2 / 8766 * parameters['RK'],
