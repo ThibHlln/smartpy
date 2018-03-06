@@ -65,7 +65,11 @@ def simulate(catchment_id, c_area_m2, g_area_m2,
     dict_discharge, gw_ratio = smart_model.simulate(parameters)
 
     write_flow_file_from_dict(smart_model.timeframe, dict_discharge,
-                              ''.join([smart_model.out_f, catchment_id, '.flow']),
+                              ''.join([smart_model.out_f, catchment_id, '.mod.flow']),
+                              method='raw')
+
+    write_flow_file_from_dict(smart_model.timeframe, smart_model.flow,
+                              ''.join([smart_model.out_f, catchment_id, '.obs.flow']),
                               method='raw')
 
     # calculate objective function

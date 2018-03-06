@@ -412,6 +412,9 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report
             my_writer = writer(my_file, delimiter=',')
             my_writer.writerow(['DATETIME', 'FLOW'])
             for step in my_list_datetime[1:]:
-                my_writer.writerow([step, '%e' % discharge[step]])
+                try:
+                    my_writer.writerow([step, '%e' % discharge[step]])
+                except KeyError:
+                    my_writer.writerow([step, ''])
     else:
         raise Exception("Unknown method for updating simulations files.")
