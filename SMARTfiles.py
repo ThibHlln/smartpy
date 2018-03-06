@@ -10,10 +10,10 @@ def get_dict_rain_series_simu(file_location, start_simu, end_simu, time_delta_si
 
     if (start_data - time_delta_data + time_delta_simu <= start_simu) and (end_simu <= end_data):
         time_delta_res = get_required_resolution(start_data, start_simu, time_delta_data, time_delta_simu)
-        return rescale_data_time_resolution(dict_rain,
-                                            start_data, end_data, time_delta_data,
-                                            time_delta_res,
-                                            start_simu, end_simu, time_delta_simu)
+        return rescale_time_resolution_of_regular_cumulative_data(dict_rain,
+                                                                  start_data, end_data, time_delta_data,
+                                                                  time_delta_res,
+                                                                  start_simu, end_simu, time_delta_simu)
     else:
         raise Exception('Rain data not sufficient for simulation.')
 
@@ -23,10 +23,10 @@ def get_dict_peva_series_simu(file_location, start_simu, end_simu, time_delta_si
 
     if (start_data - time_delta_data + time_delta_simu <= start_simu) and (end_simu <= end_data):
         time_delta_res = get_required_resolution(start_data, start_simu, time_delta_data, time_delta_simu)
-        return rescale_data_time_resolution(dict_peva,
-                                            start_data, end_data, time_delta_data,
-                                            time_delta_simu,
-                                            start_simu, end_simu, time_delta_res)
+        return rescale_time_resolution_of_regular_cumulative_data(dict_peva,
+                                                                  start_data, end_data, time_delta_data,
+                                                                  time_delta_simu,
+                                                                  start_simu, end_simu, time_delta_res)
     else:
         raise Exception('PEva data not sufficient for simulation.')
 
@@ -36,16 +36,17 @@ def get_dict_discharge_series(file_location, start_report, end_report, catchment
 
     scaling_factor = catchment_area / gauged_area
 
-    start_date = start_report.date()
-    end_date = end_report.date()
+    start_date = (start_report - timedelta(days=2)).date()
+    end_date = (end_report + timedelta(days=1)).date()
 
-    dict_flow = dict()
+    dict_flow = OrderedDict()
     for dt in data_flow.iterkeys():
         d = dt.date()
         if (start_date <= d) and (d <= end_date):
-            dict_flow[dt.replace(hour=9)] = data_flow[dt] * scaling_factor
+            dict_flow[dt] = data_flow[dt] * scaling_factor
 
-    return dict_flow
+    return rescale_time_resolution_of_irregular_mean_data(dict_flow, start_report, end_report,
+                                                          timedelta(days=1), timedelta(hours=1))
 
 
 def get_dict_simulation_settings(file_location):
@@ -202,15 +203,16 @@ def get_required_resolution(start_data, start_simu, delta_data, delta_simu):
                                  gcd(delta_data.total_seconds(), delta_simu.total_seconds())))
 
 
-def increase_data_time_resolution(dict_info, start_lo, end_lo,
-                                  time_delta_lo, time_delta_hi):
+def increase_time_resolution_of_regular_cumulative_data(dict_info, start_lo, end_lo,
+                                                        time_delta_lo, time_delta_hi):
     """ Use the low resolution to create the high resolution """
     my_dt_lo = start_lo
     (divisor, remainder) = divmod(int(time_delta_lo.total_seconds()), int(time_delta_hi.total_seconds()))
     if remainder != 0:
         raise Exception("Increase Resolution: Time Deltas are not multiples of each other.")
     elif divisor < 1:
-        raise Exception("Increase Resolution: Low resolution lower than higher resolution.")
+        raise Exception("Increase Resolution: Low resolution lower than higher resolution "
+                        "{} < {}.".format(time_delta_lo, time_delta_hi))
 
     new_dict_info = dict()
     while (start_lo <= my_dt_lo) and (my_dt_lo <= end_lo):
@@ -223,15 +225,16 @@ def increase_data_time_resolution(dict_info, start_lo, end_lo,
     return new_dict_info
 
 
-def decrease_data_time_resolution(dict_info, start_lo, end_lo,
-                                  time_delta_lo, time_delta_hi):
+def decrease_time_resolution_of_regular_cumulative_data(dict_info, start_lo, end_lo,
+                                                        time_delta_lo, time_delta_hi):
     """ Use the high resolution to create the low resolution """
     my_dt_lo = start_lo
     (divisor, remainder) = divmod(int(time_delta_lo.total_seconds()), int(time_delta_hi.total_seconds()))
     if remainder != 0:
         raise Exception("Decrease Resolution: Time Deltas are not multiples of each other.")
     elif divisor < 1:
-        raise Exception("Decrease Resolution: Low resolution lower than higher resolution.")
+        raise Exception("Decrease Resolution: Low resolution lower than higher resolution "
+                        "{} < {}.".format(time_delta_lo, time_delta_hi))
 
     new_dict_info = dict()
     while (start_lo <= my_dt_lo) and (my_dt_lo <= end_lo):
@@ -244,27 +247,98 @@ def decrease_data_time_resolution(dict_info, start_lo, end_lo,
     return new_dict_info
 
 
-def rescale_data_time_resolution(dict_data,
-                                 start_data, end_data, time_delta_data,
-                                 time_delta_res,
-                                 start_simu, end_simu, time_delta_simu):
+def rescale_time_resolution_of_regular_cumulative_data(dict_data,
+                                                       start_data, end_data, time_delta_data,
+                                                       time_delta_res,
+                                                       start_simu, end_simu, time_delta_simu):
 
     if time_delta_data > time_delta_res:  # i.e. information resolution too low to generate simu timeseries
-        my_tmp_dict = increase_data_time_resolution(dict_data, start_data, end_data,
-                                                    time_delta_data, time_delta_res)
+        my_tmp_dict = increase_time_resolution_of_regular_cumulative_data(dict_data, start_data, end_data,
+                                                                          time_delta_data, time_delta_res)
     else:  # i.e. information resolution suitable to generate simu timeseries
         # i.e. time_delta_data == time_delta_res (time_delta_data < time_delta_res cannot be true because use of GCD)
         my_tmp_dict = dict_data
 
     if time_delta_simu > time_delta_res:  # i.e. information resolution too high to generate simu timeseries
-        my_new_dict = decrease_data_time_resolution(my_tmp_dict, start_simu, end_simu,
-                                                    time_delta_simu, time_delta_res)
+        my_new_dict = decrease_time_resolution_of_regular_cumulative_data(my_tmp_dict, start_simu, end_simu,
+                                                                          time_delta_simu, time_delta_res)
     else:  # i.e. information resolution suitable to generate simu timeseries
         # i.e. time_delta_simu == time_delta_res (time_delta_simu < time_delta_res cannot be true because use of GCD)
-        my_new_dict = decrease_data_time_resolution(my_tmp_dict, start_simu, end_simu,
-                                                    time_delta_simu, time_delta_res)
+        my_new_dict = decrease_time_resolution_of_regular_cumulative_data(my_tmp_dict, start_simu, end_simu,
+                                                                          time_delta_simu, time_delta_res)
         # use decrease_data_time_resolution anyway for the only purpose to reduce the size of the dict
         # to the only required DateTimes in the simulation period
+
+    return my_new_dict
+
+
+def increase_time_resolution_of_irregular_mean_data(dict_info, time_delta_lo, time_delta_hi):
+    """
+    Create high resolution mean data from lower resolution mean data
+    using backwards duplication.
+    """
+    new_dict_info = dict()
+    # get the series of DateTime in the data
+    my_dts = dict_info.keys()
+    for i, my_dt in enumerate(my_dts[1:]):
+        # determine the duration of the cumulative data between the two time steps
+        my_delta = my_dt - my_dts[i]
+        if my_delta >= timedelta(seconds=1.5 * time_delta_lo.total_seconds()):
+            my_delta = time_delta_lo
+        # determine the number of hours the cumulative data has to be spread over
+        (divisor, remainder) = divmod(int(my_delta.total_seconds()), int(time_delta_hi.total_seconds()))
+        if remainder != 0:
+            raise Exception("Increase Resolution: Time Deltas are not multiples of each other.")
+        elif divisor < 1:
+            raise Exception("Increase Resolution: Low resolution lower than higher resolution "
+                            "{} < {}.".format(my_delta, time_delta_hi))
+        # determine the high resolution value
+        try:
+            my_value = float(dict_info[my_dt])
+        except ValueError:  # no data for this time step
+            my_value = ''
+        # spread the hourly value backwards
+        for my_sub_step in xrange(0, -divisor, -1):
+            if new_dict_info.get(my_dt + my_sub_step * time_delta_hi):  # should not happen
+                raise Exception("Increase Resolution: Overwriting already existing data for datetime.")
+            else:
+                new_dict_info[my_dt + my_sub_step * time_delta_hi] = my_value
+
+    return new_dict_info
+
+
+def decrease_time_resolution_of_irregular_mean_data(dict_info, dt_start, dt_end, time_delta_hi, time_delta_lo):
+    """ Creates low resolution cumulative data from high resolution cumulative data
+    using arithmetic mean. """
+    my_dt = dt_start
+    new_dict_info = OrderedDict()
+
+    (divisor, remainder) = divmod(int(time_delta_lo.total_seconds()), int(time_delta_hi.total_seconds()))
+    if remainder != 0:
+        raise Exception("Decrease Resolution: Time Deltas are not multiples of each other.")
+    elif divisor < 1:
+        raise Exception("Decrease Resolution: Low resolution lower than higher resolution "
+                        "{} < {}.".format(time_delta_lo, time_delta_hi))
+
+    while (dt_start <= my_dt) and (my_dt <= dt_end):
+        try:
+            my_values = 0.0
+            for my_sub_step in xrange(0, -divisor, -1):
+                my_values += dict_info[my_dt + my_sub_step * time_delta_hi]
+            new_dict_info[my_dt] = my_values / divisor
+            my_dt += time_delta_lo
+        except KeyError:  # at least one of the values is not available (i.e. missing value)
+            my_dt += time_delta_lo
+        except TypeError:  # at least one of the values was not a float [string] (i.e. missing value)
+            my_dt += time_delta_lo
+
+    return new_dict_info
+
+
+def rescale_time_resolution_of_irregular_mean_data(dict_data, start_data, end_data, time_delta_lo, time_delta_hi):
+    my_tmp_dict = increase_time_resolution_of_irregular_mean_data(dict_data, time_delta_lo, time_delta_hi)
+    my_new_dict = decrease_time_resolution_of_irregular_mean_data(my_tmp_dict, start_data, end_data,
+                                                                  time_delta_hi, time_delta_lo)
 
     return my_new_dict
 
