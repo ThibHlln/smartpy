@@ -12,8 +12,7 @@ def calculate_obj_fn(simulation, evaluation, method):
 
 
 def nash_sutcliffe(evaluation, simulation):
-
-    # Remove the steps that are missing observations
+    # convert list to nd arrays
     nda_flows_mod, nda_flows_obs = numpy.asarray(simulation), numpy.asarray(evaluation)
 
     # calculate mean of observations
@@ -30,3 +29,18 @@ def groundwater_constraint(evaluation, simulation):
         return 1.0
     else:
         return 0.0
+
+
+def bounded_nash_sutcliffe(evaluation, simulation):
+    # convert list to nd arrays
+    nda_flows_mod, nda_flows_obs = numpy.asarray(simulation), numpy.asarray(evaluation)
+
+    # calculate mean of observations
+    mean_flow_obs = numpy.mean(nda_flows_obs)
+
+    # calculate C2M, bounded formulation of NSE
+    f = numpy.sum((nda_flows_obs - nda_flows_mod) ** 2)
+    f0 = numpy.sum((nda_flows_obs - mean_flow_obs) ** 2)
+    c2m = (1 - (f / f0)) / (1 + (f / f0))
+
+    return c2m
