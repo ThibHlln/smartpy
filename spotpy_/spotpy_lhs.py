@@ -1,15 +1,14 @@
 import spotpy
 import argparse
-from os import path, sep
+from os import path, getcwd, sep
 
-from SMARTpy import SMART
-from SMARTfiles import get_dict_simulation_settings
-from SMARTobjective import groundwater_constraint
+from scripts.SMARTpy import SMART
+from scripts.SMARTfiles import get_dict_simulation_settings
+from scripts.SMARTobjective import groundwater_constraint, bounded_nash_sutcliffe
 
 
 class SpotPySetUp(object):
-    def __init__(self, catchment):
-        root_f = path.realpath('..')
+    def __init__(self, catchment, root_f):
         in_f = sep.join([root_f, 'in', catchment, sep])
 
         c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
@@ -54,16 +53,21 @@ class SpotPySetUp(object):
 
     def objectivefunction(self, simulation, evaluation):
         obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj2 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+        obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj3 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
+        obj4 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
+        obj5 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
+        obj6 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj7 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
         if self.constraints['gw'] == -999.0:
-            return obj1
+            return [obj1, obj2, obj3, obj4, obj5, obj6]
         else:
-            return [obj1, obj2]
+            return [obj1, obj2, obj3, obj4, obj5, obj6, obj7]
 
 
-def spotpy_instructions(catchment, sample_size, parallel):
+def spotpy_instructions(catchment, sample_size, parallel, root_f):
 
-    spotpy_setup = SpotPySetUp(catchment)
+    spotpy_setup = SpotPySetUp(catchment, root_f)
 
     sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + '{}_LHS_SMART'.format(catchment),
                                     dbformat='csv', parallel=parallel, save_sim=False)
@@ -73,6 +77,12 @@ def spotpy_instructions(catchment, sample_size, parallel):
 
 
 if __name__ == '__main__':
+    # Define the root of the SMARTpy package
+    if getcwd() == path.dirname(path.realpath(__file__)):  # execution from the directory where the script is
+        smart_root = path.realpath('../..')  # move to parent of parent directory of this current python file
+    else:  # execution not from the directory where the script is
+        smart_root = getcwd()  # keep the current working directory
+
     # Collect the arguments to set up SPOTPY
     parser = argparse.ArgumentParser(description="simulate lumped catchment hydrology"
                                                  "for one catchment and one time period"
@@ -95,4 +105,4 @@ if __name__ == '__main__':
         parallelisation = 'seq'  # use traditional sequential computing
 
     # Call main function containing SPOTPY instructions
-    spotpy_instructions(args.catchment, args.sample_size, parallelisation)
+    spotpy_instructions(args.catchment, args.sample_size, parallelisation, smart_root)

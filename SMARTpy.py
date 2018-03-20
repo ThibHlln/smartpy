@@ -100,7 +100,7 @@ def valid_delta(n):
 
 
 if __name__ == '__main__':
-    # Define the root of the CSF
+    # Define the root of the SMARTpy package
     smart_root = path.realpath('..')  # move to parent directory of this current python file
 
     # Collect the arguments of the program call
