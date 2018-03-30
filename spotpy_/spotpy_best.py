@@ -29,7 +29,7 @@ class SpotPySetUp(object):
         self.sampled_params, self.sampled_obj_fns = get_sampled_sets_from_file(self.sampling_run_file)
         self.constraints_values = [(1.0,)]
         self.constraints_types = ['equal']
-        self.best_params = get_best_sets(self.sampled_params, self.sampled_obj_fns[:, [6]],
+        self.best_params = get_best_sets(self.sampled_params, self.sampled_obj_fns[:, [7]],
                                          self.constraints_values, self.constraints_types,
                                          self.sampled_obj_fns[:, [0]], nb_best)
         # give list of behavioural parameters
@@ -50,8 +50,8 @@ class SpotPySetUp(object):
         self.database = file(self.model.out_f + '{}_{}BEST_SMART.csv'.format(catchment, nb_best), 'wb')
         self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow.iterkeys()] \
             if self.save_sim else []
-        self.obj_fn_names = ['NSE', 'logNSE', 'Bias', 'KGE', 'RMSE', 'C2M'] if self.constraints['gw'] == -999.0 \
-            else ['NSE', 'logNSE', 'Bias', 'KGE', 'RMSE', 'C2M', 'GW']
+        self.obj_fn_names = ['NSE', 'logNSE', 'Bias', 'PBias', 'KGE', 'RMSE', 'C2M'] if \
+            self.constraints['gw'] == -999.0 else ['NSE', 'logNSE', 'Bias', 'PBias', 'KGE', 'RMSE', 'C2M', 'GW']
         # write header in database file
         self.database.write(','.join(self.obj_fn_names + self.param_names + self.simu_steps) + '\n')
 
@@ -77,14 +77,15 @@ class SpotPySetUp(object):
         obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj3 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
-        obj4 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
-        obj5 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
-        obj6 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj7 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+        obj4 = spotpy.objectivefunctions.pbias(evaluation=evaluation[0], simulation=simulation[0])
+        obj5 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
+        obj6 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
+        obj7 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj8 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
         if self.constraints['gw'] == -999.0:
-            return [obj1, obj2, obj3, obj4, obj5, obj6]
-        else:
             return [obj1, obj2, obj3, obj4, obj5, obj6, obj7]
+        else:
+            return [obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8]
 
     def save(self, obj_fns, parameters, simulations, *args, **kwargs):
         if self.save_sim:

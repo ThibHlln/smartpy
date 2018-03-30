@@ -55,14 +55,15 @@ class SpotPySetUp(object):
         obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj3 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
-        obj4 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
-        obj5 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
-        obj6 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj7 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+        obj4 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
+        obj5 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
+        obj6 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
+        obj7 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj8 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
         if self.constraints['gw'] == -999.0:
-            return [obj1, obj2, obj3, obj4, obj5, obj6]
-        else:
             return [obj1, obj2, obj3, obj4, obj5, obj6, obj7]
+        else:
+            return [obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8]
 
 
 def spotpy_instructions(catchment, sample_size, parallel, root_f):
