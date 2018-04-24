@@ -93,6 +93,7 @@ def run_all_steps(area_m2, delta,
     q_out = list()
     q_ove, q_dra, q_int, q_sgw, q_dgw = 0.0, 0.0, 0.0, 0.0, 0.0
     i_report = 1
+    delta_sec = delta.total_seconds()
     for dt in timeseries[1:]:
         database[dt] = dict()
         database[dt]['Q_aeva'], database[dt]['Q_ove'], database[dt]['Q_dra'], database[dt]['Q_int'], \
@@ -102,7 +103,7 @@ def run_all_steps(area_m2, delta,
             database[dt]['V_ly2'], database[dt]['V_ly3'], database[dt]['V_ly4'], \
             database[dt]['V_ly5'], database[dt]['V_ly6'], database[dt]['V_river'] = \
             run_one_step(
-                area_m2, delta,
+                area_m2, delta_sec,
                 rain[dt], peva[dt],
                 parameters['T'], parameters['C'], parameters['H'], parameters['D'], parameters['S'],
                 parameters['Z'], parameters['SK'], parameters['FK'], parameters['GK'], parameters['RK'],
@@ -132,7 +133,7 @@ def run_all_steps(area_m2, delta,
     return discharge, (q_sgw + q_dgw) / (q_ove + q_dra + q_int + q_sgw + q_dgw)
 
 
-def run_one_step(area_m2, time_delta,
+def run_one_step(area_m2, time_delta_sec,
                  c_in_rain, c_in_peva,
                  c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk, r_p_k_h2o,
                  c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
@@ -145,7 +146,7 @@ def run_one_step(area_m2, time_delta,
     It returns all the outputs and states of the two models as a tuple.
 
     :param area_m2:
-    :param time_delta:
+    :param time_delta_sec:
     :param c_in_rain:
     :param c_in_peva:
     :param c_p_t:
@@ -172,30 +173,34 @@ def run_one_step(area_m2, time_delta,
     :param r_s_v_h2o:
     :return:
     """
-    catchment = run_one_step_catchment(
-        area_m2, time_delta.total_seconds() / 60,
-        c_in_rain, c_in_peva,
-        c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk,
-        c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
-        c_s_v_h2o_ly1, c_s_v_h2o_ly2, c_s_v_h2o_ly3, c_s_v_h2o_ly4, c_s_v_h2o_ly5, c_s_v_h2o_ly6
-    )
+    out_aeva, out_q_h2o_ove, out_q_h2o_dra, out_q_h2o_int, out_q_h2o_sgw, out_q_h2o_dgw, \
+        s_v_h2o_ove, s_v_h2o_dra, s_v_h2o_int, s_v_h2o_sgw, s_v_h2o_dgw, \
+        s_v_h2o_ly1, s_v_h2o_ly2, s_v_h2o_ly3, s_v_h2o_ly4, s_v_h2o_ly5, s_v_h2o_ly6 = \
+        run_one_step_catchment(
+            area_m2, time_delta_sec,
+            c_in_rain, c_in_peva,
+            c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk,
+            c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
+            c_s_v_h2o_ly1, c_s_v_h2o_ly2, c_s_v_h2o_ly3, c_s_v_h2o_ly4, c_s_v_h2o_ly5, c_s_v_h2o_ly6
+        )
 
-    river = run_one_step_river(
-        time_delta.total_seconds() / 60,
-        catchment[1] + catchment[2] + catchment[3] + catchment[4] + catchment[5],
-        r_p_k_h2o,
-        r_s_v_h2o
-    )
+    out_q_riv, s_v_riv = \
+        run_one_step_river(
+            time_delta_sec,
+            out_q_h2o_ove + out_q_h2o_dra + out_q_h2o_int + out_q_h2o_sgw + out_q_h2o_dgw,
+            r_p_k_h2o,
+            r_s_v_h2o
+        )
 
     return (
-        catchment[0], catchment[1], catchment[2], catchment[3], catchment[4], catchment[5], river[0],  # outputs
-        catchment[6], catchment[7], catchment[8], catchment[9], catchment[10],   # states
-        catchment[11], catchment[12], catchment[13], catchment[14], catchment[15], catchment[16],
-        river[1]
+        out_aeva, out_q_h2o_ove, out_q_h2o_dra, out_q_h2o_int, out_q_h2o_sgw, out_q_h2o_dgw, out_q_riv,  # outputs
+        s_v_h2o_ove, s_v_h2o_dra, s_v_h2o_int, s_v_h2o_sgw, s_v_h2o_dgw,   # states
+        s_v_h2o_ly1, s_v_h2o_ly2, s_v_h2o_ly3, s_v_h2o_ly4, s_v_h2o_ly5, s_v_h2o_ly6,
+        s_v_riv
     )
 
 
-def run_one_step_catchment(area_m2, time_gap_min,
+def run_one_step_catchment(area_m2, time_gap_sec,
                            c_in_rain, c_in_peva,
                            c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk,
                            c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
@@ -243,7 +248,6 @@ def run_one_step_catchment(area_m2, time_gap_min,
     nb_soil_layers = 6.0  # number of layers in soil column [-]
 
     # # 1.1. Convert non-SI units
-    time_gap_sec = time_gap_min * 60.0  # [seconds]
     c_p_sk *= 3600.0  # convert hours in seconds
     c_p_fk *= 3600.0  # convert hours in seconds
     c_p_gk *= 3600.0  # convert hours in seconds
@@ -253,22 +257,28 @@ def run_one_step_catchment(area_m2, time_gap_min,
     # /!\ all calculations in mm equivalent until further notice
 
     # calculate capacity Z and level LVL of each layer (assumed equal) from effective soil depth
-    dict_z_lyr = dict()
-    for i in [1, 2, 3, 4, 5, 6]:
-        dict_z_lyr[i] = c_p_z / nb_soil_layers
-    dict_lvl_lyr = dict()
-    # use indices to identify the six soil layers (from 1 for top layer to 6 for bottom layer)
-    dict_lvl_lyr[1] = c_s_v_h2o_ly1 / area_m2 * 1e3  # factor 1000 to convert m in mm
-    dict_lvl_lyr[2] = c_s_v_h2o_ly2 / area_m2 * 1e3  # factor 1000 to convert m in mm
-    dict_lvl_lyr[3] = c_s_v_h2o_ly3 / area_m2 * 1e3  # factor 1000 to convert m in mm
-    dict_lvl_lyr[4] = c_s_v_h2o_ly4 / area_m2 * 1e3  # factor 1000 to convert m in mm
-    dict_lvl_lyr[5] = c_s_v_h2o_ly5 / area_m2 * 1e3  # factor 1000 to convert m in mm
-    dict_lvl_lyr[6] = c_s_v_h2o_ly6 / area_m2 * 1e3  # factor 1000 to convert m in mm
+    list_z_lyr = [
+        0.0,  # artificial null value added to keep script clear later
+        c_p_z / nb_soil_layers,  # Soil Layer 1
+        c_p_z / nb_soil_layers,  # Soil Layer 2
+        c_p_z / nb_soil_layers,  # Soil Layer 3
+        c_p_z / nb_soil_layers,  # Soil Layer 4
+        c_p_z / nb_soil_layers,  # Soil Layer 5
+        c_p_z / nb_soil_layers  # Soil Layer 6
+    ]
+
+    list_lvl_lyr = [  # factor 1000 to convert m in mm
+        0.0,  # artificial null value added to keep script clear later
+        c_s_v_h2o_ly1 / area_m2 * 1e3,  # Soil Layer 1
+        c_s_v_h2o_ly2 / area_m2 * 1e3,  # Soil Layer 2
+        c_s_v_h2o_ly3 / area_m2 * 1e3,  # Soil Layer 3
+        c_s_v_h2o_ly4 / area_m2 * 1e3,  # Soil Layer 4
+        c_s_v_h2o_ly5 / area_m2 * 1e3,  # Soil Layer 5
+        c_s_v_h2o_ly6 / area_m2 * 1e3  # Soil Layer 6
+    ]
 
     # calculate cumulative level of water in all soil layers at beginning of time step (i.e. soil moisture)
-    lvl_total_start = 0.0
-    for i in [1, 2, 3, 4, 5, 6]:
-        lvl_total_start += dict_lvl_lyr[i]
+    lvl_total_start = sum(list_lvl_lyr)
 
     # apply parameter T to rainfall data (aerial rainfall correction)
     rain = c_in_rain * c_p_t
@@ -286,12 +296,12 @@ def run_one_step_catchment(area_m2, time_gap_min,
         excess_rain -= overland_flow  # remainder that infiltrates
         # calculate percolation through soil layers (from top layer [1] to bottom layer [6])
         for i in [1, 2, 3, 4, 5, 6]:
-            space_in_lyr = dict_z_lyr[i] - dict_lvl_lyr[i]
+            space_in_lyr = list_z_lyr[i] - list_lvl_lyr[i]
             if excess_rain <= space_in_lyr:
-                dict_lvl_lyr[i] += excess_rain
+                list_lvl_lyr[i] += excess_rain
                 excess_rain = 0.0
             else:
-                dict_lvl_lyr[i] = dict_z_lyr[i]
+                list_lvl_lyr[i] = list_z_lyr[i]
                 excess_rain -= space_in_lyr
         # calculate saturation excess from remaining excess rainfall after filling layers (if not 0)
         drain_flow = c_p_d * excess_rain  # sat. excess contribution (if not 0) to quick interflow runoff store
@@ -300,24 +310,24 @@ def run_one_step_catchment(area_m2, time_gap_min,
         s_prime = c_p_s * (lvl_total_start / c_p_z)
         # leak to interflow
         for i in [1, 2, 3, 4, 5, 6]:  # soil moisture outflow reducing exponentially downwards
-            leak_interflow = dict_lvl_lyr[i] * (s_prime ** i)
-            if leak_interflow < dict_lvl_lyr[i]:
+            leak_interflow = list_lvl_lyr[i] * (s_prime ** i)
+            if leak_interflow < list_lvl_lyr[i]:
                 inter_flow += leak_interflow  # soil moisture outflow contribution to slow interflow runoff store
-                dict_lvl_lyr[i] -= leak_interflow
+                list_lvl_lyr[i] -= leak_interflow
         # leak to shallow groundwater flow
         shallow_flow = 0.0
         for i in [1, 2, 3, 4, 5, 6]:  # soil moisture outflow reducing linearly downwards
-            leak_shallow_flow = dict_lvl_lyr[i] * (s_prime / i)
-            if leak_shallow_flow < dict_lvl_lyr[i]:
+            leak_shallow_flow = list_lvl_lyr[i] * (s_prime / i)
+            if leak_shallow_flow < list_lvl_lyr[i]:
                 shallow_flow += leak_shallow_flow  # soil moisture outflow contribution to slow shallow GW runoff store
-                dict_lvl_lyr[i] -= leak_shallow_flow
+                list_lvl_lyr[i] -= leak_shallow_flow
         # leak to deep groundwater flow
         deep_flow = 0.0
         for i in [6, 5, 4, 3, 2, 1]:  # soil moisture outflow reducing exponentially upwards
-            leak_deep_flow = dict_lvl_lyr[i] * (s_prime ** (7 - i))
-            if leak_deep_flow < dict_lvl_lyr[i]:
+            leak_deep_flow = list_lvl_lyr[i] * (s_prime ** (7 - i))
+            if leak_deep_flow < list_lvl_lyr[i]:
                 deep_flow += leak_deep_flow  # soil moisture outflow contribution to slow deep GW runoff store
-                dict_lvl_lyr[i] -= leak_deep_flow
+                list_lvl_lyr[i] -= leak_deep_flow
     else:  # no excess rainfall (i.e. potential evapotranspiration not satisfied by available rainfall)
         overland_flow = 0.0  # no soil moisture contribution to quick overland flow runoff store
         drain_flow = 0.0  # no soil moisture contribution to quick drain flow runoff store
@@ -328,21 +338,16 @@ def run_one_step_catchment(area_m2, time_gap_min,
         deficit_rain = excess_rain * (-1.0)  # excess is negative => excess is actually a deficit
         aeva += rain
         for i in [1, 2, 3, 4, 5, 6]:  # attempt to satisfy PE from soil layers (from top layer [1] to bottom layer [6]
-            if dict_lvl_lyr[i] >= deficit_rain:  # i.e. all moisture required available in this soil layer
-                dict_lvl_lyr[i] -= deficit_rain  # soil layer is reduced by the moisture required
+            if list_lvl_lyr[i] >= deficit_rain:  # i.e. all moisture required available in this soil layer
+                list_lvl_lyr[i] -= deficit_rain  # soil layer is reduced by the moisture required
                 aeva += deficit_rain  # this moisture contributes to the actual evapotranspiration
                 deficit_rain = 0.0  # the full moisture still required has been met
             else:  # i.e. not all moisture required available in this soil layer
-                aeva += dict_lvl_lyr[i]  # takes what is available in this layer for evapotranspiration
+                aeva += list_lvl_lyr[i]  # takes what is available in this layer for evapotranspiration
                 # effectively reduce the evapotranspiration demand for the next layer using parameter C
                 # i.e. the more you move down through the soil layers, the less AET can meet PET (exponentially)
-                deficit_rain = c_p_c * (deficit_rain - dict_lvl_lyr[i])
-                dict_lvl_lyr[i] = 0.0  # soil layer is now empty
-
-    # calculate cumulative level of water in all soil layers at end of time step (i.e. soil moisture)
-    lvl_total_end = 0.0
-    for i in [1, 2, 3, 4, 5, 6]:
-        lvl_total_end += dict_lvl_lyr[i]
+                deficit_rain = c_p_c * (deficit_rain - list_lvl_lyr[i])
+                list_lvl_lyr[i] = 0.0  # soil layer is now empty
 
     # /!\ all calculations in S.I. units now (i.e. mm converted into cubic metres)
 
@@ -353,53 +358,38 @@ def run_one_step_catchment(area_m2, time_gap_min,
     c_out_q_h2o_ove = c_s_v_h2o_ove / c_p_sk  # [m3/s]
     c_s_v_h2o_ove += (overland_flow / 1e3 * area_m2) - (c_out_q_h2o_ove * time_gap_sec)  # [m3] - [m3]
     if c_s_v_h2o_ove < 0.0:
-        # logger.debug(''.join([
-        #     'SMART # ', waterbody, ': ', datetime_time_step.strftime("%d/%m/%Y %H:%M:%S"),
-        #     ' - Volume in OVE Store has gone negative, volume reset to zero.']))
         c_s_v_h2o_ove = 0.0
     # route drain flow (quick interflow runoff)
     c_out_q_h2o_dra = c_s_v_h2o_dra / c_p_sk  # [m3/s]
     c_s_v_h2o_dra += (drain_flow / 1e3 * area_m2) - (c_out_q_h2o_dra * time_gap_sec)  # [m3] - [m3]
     if c_s_v_h2o_dra < 0.0:
-        # logger.debug(''.join([
-        #     'SMART # ', waterbody, ': ', datetime_time_step.strftime("%d/%m/%Y %H:%M:%S"),
-        #     ' - Volume in DRA Store has gone negative, volume reset to zero.']))
         c_s_v_h2o_dra = 0.0
     # route interflow (slow interflow runoff)
     c_out_q_h2o_int = c_s_v_h2o_int / c_p_fk  # [m3/s]
     c_s_v_h2o_int += (inter_flow / 1e3 * area_m2) - (c_out_q_h2o_int * time_gap_sec)  # [m3] - [m3]
     if c_s_v_h2o_int < 0.0:
-        # logger.debug(''.join([
-        #     'SMART # ', waterbody, ': ', datetime_time_step.strftime("%d/%m/%Y %H:%M:%S"),
-        #     ' - Volume in INT Store has gone negative, volume reset to zero.']))
         c_s_v_h2o_int = 0.0
     # route shallow groundwater flow (slow shallow GW runoff)
     c_out_q_h2o_sgw = c_s_v_h2o_sgw / c_p_gk  # [m3/s]
     c_s_v_h2o_sgw += (shallow_flow / 1e3 * area_m2) - (c_out_q_h2o_sgw * time_gap_sec)  # [m3] - [m3]
     if c_s_v_h2o_sgw < 0.0:
-        # logger.debug(''.join([
-        #     'SMART # ', waterbody, ': ', datetime_time_step.strftime("%d/%m/%Y %H:%M:%S"),
-        #     ' - Volume in SGW Store has gone negative, volume reset to zero.']))
         c_s_v_h2o_sgw = 0.0
     # route deep groundwater flow (slow deep GW runoff)
     c_out_q_h2o_dgw = c_s_v_h2o_dgw / c_p_gk  # [m3/s]
     c_s_v_h2o_dgw += (deep_flow / 1e3 * area_m2) - (c_out_q_h2o_dgw * time_gap_sec)  # [m3] - [m3]
     if c_s_v_h2o_dgw < 0.0:
-        # logger.debug(''.join([
-        #     'SMART # ', waterbody, ': ', datetime_time_step.strftime("%d/%m/%Y %H:%M:%S"),
-        #     ' - Volume in DGW Store has gone negative, volume reset to zero.']))
         c_s_v_h2o_dgw = 0.0
 
     # # 1.3. Return outputs and states
     return (
         c_out_aeva, c_out_q_h2o_ove, c_out_q_h2o_dra, c_out_q_h2o_int, c_out_q_h2o_sgw, c_out_q_h2o_dgw,
         c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
-        dict_lvl_lyr[1] / 1e3 * area_m2, dict_lvl_lyr[2] / 1e3 * area_m2, dict_lvl_lyr[3] / 1e3 * area_m2,
-        dict_lvl_lyr[4] / 1e3 * area_m2, dict_lvl_lyr[5] / 1e3 * area_m2, dict_lvl_lyr[6] / 1e3 * area_m2
+        list_lvl_lyr[1] / 1e3 * area_m2, list_lvl_lyr[2] / 1e3 * area_m2, list_lvl_lyr[3] / 1e3 * area_m2,
+        list_lvl_lyr[4] / 1e3 * area_m2, list_lvl_lyr[5] / 1e3 * area_m2, list_lvl_lyr[6] / 1e3 * area_m2
     )
 
 
-def run_one_step_river(time_gap_min,
+def run_one_step_river(time_gap_sec,
                        r_in_q_riv, r_p_rk, r_s_v_riv):
     """
     River model * r_ *
@@ -415,7 +405,6 @@ def run_one_step_river(time_gap_min,
     """
     # # 1. Hydrology
     # # 1.0. Define internal constants
-    time_gap_sec = time_gap_min * 60.0  # [seconds]
     r_p_rk *= 3600.0  # convert hours in seconds
 
     # # 1.1. Hydrological calculations
