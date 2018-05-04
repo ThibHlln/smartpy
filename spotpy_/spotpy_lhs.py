@@ -55,7 +55,7 @@ class SpotPySetUp(object):
         obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj3 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
-        obj4 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
+        obj4 = spotpy.objectivefunctions.pbias(evaluation=evaluation[0], simulation=simulation[0])
         obj5 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
         obj6 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
         obj7 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
