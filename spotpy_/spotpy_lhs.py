@@ -1,14 +1,16 @@
 import spotpy
+import numpy as np
 import argparse
 from os import path, getcwd, sep
 
 from scripts.SMARTpy import SMART
 from scripts.SMARTfiles import get_dict_simulation_settings
-from scripts.SMARTobjective import groundwater_constraint, bounded_nash_sutcliffe
+from scripts.SMARTobjective import \
+    groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
 
 
 class SpotPySetUp(object):
-    def __init__(self, catchment, root_f):
+    def __init__(self, catchment, root_f, save_sim=False):
         in_f = sep.join([root_f, 'in', catchment, sep])
 
         c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
@@ -16,7 +18,15 @@ class SpotPySetUp(object):
 
         self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, root_f)
 
+        self.save_sim = save_sim
+
         self.constraints = {'gw': gw_constraint}
+
+        self.param_names = ['T', 'C', 'H', 'D', 'S', 'Z', 'SK', 'FK', 'GK', 'RK']
+        self.obj_fn_names = \
+            ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb', 'Bias', 'PBias', 'RMSE', 'Rho', 'MARE'] \
+            if self.constraints['gw'] == -999.0 else \
+            ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb', 'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW']
 
         # attribute params is a list of Objects (e.g. Uniform, Normal; all having Base as a parent class)
         # that are callable (where __call__ of Base picks what numpy.random function to use)
@@ -32,6 +42,13 @@ class SpotPySetUp(object):
             spotpy.parameter.Uniform('GK', low=1200.0, high=4800.0),
             spotpy.parameter.Uniform('RK', low=1.0, high=96.0)
         ]
+
+        # set up a database to custom save results
+        self.database = file(self.model.out_f + '{}.SMART.lhs'.format(catchment), 'wb')
+        self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow.iterkeys()] \
+            if self.save_sim else []
+        # write header in database file
+        self.database.write(','.join(self.obj_fn_names + self.param_names + self.simu_steps) + '\n')
 
     def parameters(self):
         # returns an ndarray containing a tuple for each parameter (random value, step, optguess, minbound, maxbound)
@@ -54,27 +71,37 @@ class SpotPySetUp(object):
     def objectivefunction(self, simulation, evaluation):
         obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
         obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj3 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
-        obj4 = spotpy.objectivefunctions.pbias(evaluation=evaluation[0], simulation=simulation[0])
-        obj5 = spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0])
-        obj6 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
-        obj7 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj8 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+        obj3 = sqrt_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj4 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        obj5, obj5c, obj5a, obj5b = \
+            spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0], return_all=True)
+        obj6 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
+        obj7 = spotpy.objectivefunctions.pbias(evaluation=evaluation[0], simulation=simulation[0])
+        obj8 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
+        obj9 = spearman_rank_corr(evaluation=evaluation[0], simulation=simulation[0])
+        obj10 = mean_abs_rel_error(evaluation=evaluation[0], simulation=simulation[0])
+        obj11 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+
         if self.constraints['gw'] == -999.0:
-            return [obj1, obj2, obj3, obj4, obj5, obj6, obj7]
+            return [obj1, obj2, obj3, obj4, obj5, obj5c, obj5a, obj5b, obj6, obj7, obj8, obj9, obj10]
         else:
-            return [obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8]
+            return [obj1, obj2, obj3, obj4, obj5, obj5c, obj5a, obj5b, obj6, obj7, obj8, obj9, obj10, obj11]
+
+    def save(self, obj_fns, parameters, simulations, *args, **kwargs):
+        if self.save_sim:
+            line = map(np.float32, obj_fns + parameters.tolist() + simulations[0])
+        else:
+            line = map(np.float32, obj_fns + parameters.tolist())
+        self.database.write(','.join(map(str, line)) + '\n')
 
 
 def spotpy_instructions(catchment, sample_size, parallel, root_f):
 
-    spotpy_setup = SpotPySetUp(catchment, root_f)
+    spotpy_setup = SpotPySetUp(catchment, root_f, save_sim=False)
 
-    sampler = spotpy.algorithms.lhs(spotpy_setup, dbname=spotpy_setup.model.out_f + '{}_LHS_SMART'.format(catchment),
-                                    dbformat='csv', parallel=parallel, save_sim=False)
+    sampler = spotpy.algorithms.lhs(spotpy_setup, parallel=parallel)
+
     sampler.sample(sample_size)
-
-    results = sampler.getdata()
 
 
 if __name__ == '__main__':
