@@ -7,7 +7,7 @@ from SMARTfiles import \
 from SMARTparameters import get_parameters_from_file
 from SMARTstructure import run
 from SMARTtime import TimeFrame
-from SMARTobjective import calculate_obj_fn
+from SMARTobjective import nash_sutcliffe
 
 
 class SMART(object):
@@ -76,7 +76,7 @@ def simulate(catchment_id, c_area_m2, g_area_m2,
     obs = [observation for observation in smart_model.flow.itervalues()]
     mod = [dict_discharge[dt] for dt in smart_model.flow.iterkeys()]
 
-    nse = calculate_obj_fn(mod, obs, method='nse')
+    nse = nash_sutcliffe(obs, mod)
     print nse, gw_ratio
 
     # explicit garbage collection
