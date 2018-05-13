@@ -7,7 +7,6 @@ from SMARTfiles import \
 from SMARTparameters import get_parameters_from_file
 from SMARTstructure import run
 from SMARTtime import TimeFrame
-from SMARTobjective import nash_sutcliffe
 
 
 class SMART(object):
