@@ -72,17 +72,8 @@ def simulate(catchment_id, c_area_m2, g_area_m2,
                               ''.join([smart_model.out_f, catchment_id, '.obs.flow']),
                               method='raw')
 
-    # calculate objective function
-    obs = [observation for observation in smart_model.flow.itervalues()]
-    mod = [dict_discharge[dt] for dt in smart_model.flow.iterkeys()]
-
-    nse = nash_sutcliffe(obs, mod)
-    print nse, gw_ratio
-
     # explicit garbage collection
     del db
-
-    # save results in file
 
 
 def valid_date(s):
