@@ -39,12 +39,14 @@ def get_dict_discharge_series(file_location, start_report, end_report, catchment
     start_date = (start_report - timedelta(days=2)).date()
     end_date = (end_report + timedelta(days=1)).date()
 
+    # select subset of observations in simulation period + apply scaling factor
     dict_flow = OrderedDict()
     for dt in data_flow.iterkeys():
         d = dt.date()
         if (start_date <= d) and (d <= end_date):
             dict_flow[dt] = data_flow[dt] * scaling_factor
 
+    # return rescaled observations time series
     return rescale_time_resolution_of_irregular_mean_data(dict_flow, start_report, end_report,
                                                           timedelta(days=1), timedelta(hours=1))
 
@@ -275,16 +277,19 @@ def rescale_time_resolution_of_regular_cumulative_data(dict_data,
 def increase_time_resolution_of_irregular_mean_data(dict_info, time_delta_lo, time_delta_hi):
     """
     Create high resolution mean data from lower resolution mean data
-    using backwards duplication.
+    using backwards replication.
     """
     new_dict_info = dict()
     # get the series of DateTime in the data
     my_dts = dict_info.keys()
+    # special case for first datetime that does not have an antecedent value
+    my_dts.insert(0, my_dts[0] - time_delta_lo)  # add one virtual date before
+
     for i, my_dt in enumerate(my_dts[1:]):
         # determine the duration of the cumulative data between the two time steps
         my_delta = my_dt - my_dts[i]
-        if my_delta >= timedelta(seconds=1.5 * time_delta_lo.total_seconds()):
-            my_delta = time_delta_lo
+        if my_delta >= timedelta(seconds=1.5 * time_delta_lo.total_seconds()):  # i.e. gap is likely > one missing data
+            my_delta = time_delta_lo  # so set delta arbitrarily to the delta of the low resolution data ('standard')
         # determine the number of hours the cumulative data has to be spread over
         (divisor, remainder) = divmod(int(my_delta.total_seconds()), int(time_delta_hi.total_seconds()))
         if remainder != 0:
