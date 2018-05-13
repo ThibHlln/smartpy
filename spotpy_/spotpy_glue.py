@@ -73,23 +73,34 @@ class SpotPySetUp(object):
             'SK': vector[6], 'FK': vector[7], 'GK': vector[8], 'RK': vector[9]
         })
         # returns only simulations with observations
-        return [[simulations[dt] for dt in self.model.flow.iterkeys()], [constraint]]
+        return [
+            [simulations[dt] for dt in self.model.flow.iterkeys()],
+            [constraint]
+        ]
 
     def evaluation(self):
-        return [[observation for observation in self.model.flow.itervalues()], [self.constraints['gw']]]
+        return [
+            np.asarray([observation for observation in self.model.flow.itervalues()]),
+            [self.constraints['gw']]
+        ]
 
     def objectivefunction(self, simulation, evaluation):
-        obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj3 = sqrt_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
-        obj4 = bounded_nash_sutcliffe(evaluation=evaluation[0], simulation=simulation[0])
+        # select the series subset that have observations (i.e. not NaN)
+        flow_eval = evaluation[0][~np.isnan(evaluation[0])]
+        flow_simu = np.asarray(simulation[0])[~np.isnan(evaluation[0])]
+
+        # calculate the objective functions
+        obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=flow_eval, simulation=flow_simu)
+        obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=flow_eval, simulation=flow_simu)
+        obj3 = sqrt_nash_sutcliffe(evaluation=flow_eval, simulation=flow_simu)
+        obj4 = bounded_nash_sutcliffe(evaluation=flow_eval, simulation=flow_simu)
         obj5, obj5c, obj5a, obj5b = \
-            spotpy.objectivefunctions.kge(evaluation=evaluation[0], simulation=simulation[0], return_all=True)
-        obj6 = spotpy.objectivefunctions.bias(evaluation=evaluation[0], simulation=simulation[0])
-        obj7 = spotpy.objectivefunctions.pbias(evaluation=evaluation[0], simulation=simulation[0])
-        obj8 = spotpy.objectivefunctions.rmse(evaluation=evaluation[0], simulation=simulation[0])
-        obj9 = spearman_rank_corr(evaluation=evaluation[0], simulation=simulation[0])
-        obj10 = mean_abs_rel_error(evaluation=evaluation[0], simulation=simulation[0])
+            spotpy.objectivefunctions.kge(evaluation=flow_eval, simulation=flow_simu, return_all=True)
+        obj6 = spotpy.objectivefunctions.bias(evaluation=flow_eval, simulation=flow_simu)
+        obj7 = spotpy.objectivefunctions.pbias(evaluation=flow_eval, simulation=flow_simu)
+        obj8 = spotpy.objectivefunctions.rmse(evaluation=flow_eval, simulation=flow_simu)
+        obj9 = spearman_rank_corr(evaluation=flow_eval, simulation=flow_simu)
+        obj10 = mean_abs_rel_error(evaluation=flow_eval, simulation=flow_simu)
         obj11 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
 
         if self.constraints['gw'] == -999.0:
