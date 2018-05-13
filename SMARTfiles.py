@@ -301,7 +301,7 @@ def increase_time_resolution_of_irregular_mean_data(dict_info, time_delta_lo, ti
         try:
             my_value = float(dict_info[my_dt])
         except ValueError:  # no data for this time step
-            my_value = ''
+            my_value = float('nan')
         # spread the hourly value backwards
         for my_sub_step in xrange(0, -divisor, -1):
             if new_dict_info.get(my_dt + my_sub_step * time_delta_hi):  # should not happen
@@ -333,8 +333,10 @@ def decrease_time_resolution_of_irregular_mean_data(dict_info, dt_start, dt_end,
             new_dict_info[my_dt] = my_values / divisor
             my_dt += time_delta_lo
         except KeyError:  # at least one of the values is not available (i.e. missing value)
+            new_dict_info[my_dt] = float('nan')
             my_dt += time_delta_lo
         except TypeError:  # at least one of the values was not a float [string] (i.e. missing value)
+            new_dict_info[my_dt] = float('nan')
             my_dt += time_delta_lo
 
     return new_dict_info
