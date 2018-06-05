@@ -1,3 +1,9 @@
+try:
+    import SMARTc
+    smart_in_c = True
+except ImportError:
+    SMARTc = None
+    smart_in_c = False
 
 
 def run(area_m2, delta,
@@ -61,15 +67,23 @@ def run(area_m2, delta,
         database[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
                                         for name in model_states_soil_layers})
 
+    # determine whether SMARTc (C++ extension of SMART for Python) can be used or not
+    if smart_in_c:
+        one_step = SMARTc.onestep
+    else:
+        one_step = run_one_step
+
     # run the actual simulation
-    return run_all_steps(area_m2, delta,
+    return run_all_steps(one_step,
+                         area_m2, delta,
                          rain, peva,
                          parameters,
                          database,
                          timeseries, timeseries_report, report)
 
 
-def run_all_steps(area_m2, delta,
+def run_all_steps(smart_one_step,
+                  area_m2, delta,
                   rain, peva,
                   parameters,
                   database, timeseries, timeseries_report,
@@ -78,6 +92,7 @@ def run_all_steps(area_m2, delta,
     This function calls the hydrological model (run_one_step) for all the time steps in the period in sequence.
     It returns the simulated discharge at the outlet for the simulation period.
 
+    :param smart_one_step:
     :param area_m2:
     :param delta:
     :param rain:
@@ -102,7 +117,7 @@ def run_all_steps(area_m2, delta,
             database[dt]['V_sgw'], database[dt]['V_dgw'], database[dt]['V_ly1'], \
             database[dt]['V_ly2'], database[dt]['V_ly3'], database[dt]['V_ly4'], \
             database[dt]['V_ly5'], database[dt]['V_ly6'], database[dt]['V_river'] = \
-            run_one_step(
+            smart_one_step(
                 area_m2, delta_sec,
                 rain[dt], peva[dt],
                 parameters['T'], parameters['C'], parameters['H'], parameters['D'], parameters['S'],
@@ -416,9 +431,6 @@ def run_one_step_river(time_gap_sec,
     r_s_v_h2o_temp = r_s_v_h2o_old + (r_in_q_riv - r_out_q_riv) * time_gap_sec
     # check if storage has gone negative
     if r_s_v_h2o_temp < 0.0:  # temporary cannot be used
-        # logger.debug(''.join(['LINRES # ', waterbody, ': ', datetime_time_step.strftime("%d/%m/%Y %H:%M:%S"),
-        #                       ' - Volume in River Store has gone negative, '
-        #                       'outflow constrained to 95% of what is in store.']))
         # constrain outflow: allow maximum outflow at 95% of what was in store
         r_out_q_riv = 0.95 * (r_in_q_riv + r_s_v_h2o_old / time_gap_sec)
         # calculate final storage with constrained outflow
