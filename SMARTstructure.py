@@ -30,6 +30,12 @@ def run(area_m2, delta,
     :return:
     """
 
+    # determine whether SMARTc (C++ extension of SMART for Python) can be used or not
+    if smart_in_c:
+        one_step = SMARTc.onestep
+    else:
+        one_step = run_one_step
+
     # model_states_reservoirs = ['V_ove', 'V_dra', 'V_int', 'V_sgw', 'V_dgw', 'V_river']
     model_states_soil_layers = ['V_ly1', 'V_ly2', 'V_ly3', 'V_ly4', 'V_ly5', 'V_ly6']
     model_outputs = ['Q_aeva', 'Q_ove', 'Q_dra', 'Q_int', 'Q_sgw', 'Q_dgw', 'Q_out']
@@ -48,7 +54,8 @@ def run(area_m2, delta,
         # start with soil layers half full (six soil layers so half gives /12)
         database_wu[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
                                            for name in model_states_soil_layers})  # six soil layers so half gives /12
-        run_all_steps(area_m2, delta,
+        run_all_steps(one_step,
+                      area_m2, delta,
                       rain, peva,
                       parameters,
                       database_wu,
@@ -66,12 +73,6 @@ def run(area_m2, delta,
         # start with soil layers half full (six soil layers so half gives /12)
         database[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
                                         for name in model_states_soil_layers})
-
-    # determine whether SMARTc (C++ extension of SMART for Python) can be used or not
-    if smart_in_c:
-        one_step = SMARTc.onestep
-    else:
-        one_step = run_one_step
 
     # run the actual simulation
     return run_all_steps(one_step,
