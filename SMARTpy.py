@@ -3,7 +3,7 @@ from os import path, makedirs, sep
 import imp
 import argparse
 
-from SMARTfiles import \
+from SMARTinout import \
     get_dict_rain_series_simu, get_dict_peva_series_simu, get_dict_discharge_series, write_flow_file_from_dict
 from SMARTparameters import get_parameters_from_file
 from SMARTstructure import run

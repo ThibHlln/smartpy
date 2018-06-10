@@ -4,7 +4,7 @@ import argparse
 from os import path, getcwd, sep
 
 from scripts.SMARTpy import SMART, valid_file_format
-from scripts.SMARTfiles import get_dict_simulation_settings
+from scripts.SMARTinout import get_dict_simulation_settings
 from scripts.SMARTobjective import \
     groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
 
