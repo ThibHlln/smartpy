@@ -3,20 +3,20 @@ import numpy as np
 import argparse
 from os import path, getcwd, sep
 
-from scripts.SMARTpy import SMART
+from scripts.SMARTpy import SMART, valid_file_format
 from scripts.SMARTfiles import get_dict_simulation_settings
 from scripts.SMARTobjective import \
     groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
 
 
 class SpotPySetUp(object):
-    def __init__(self, catchment, root_f, save_sim=False):
+    def __init__(self, catchment, root_f, in_fmt, save_sim=False):
         in_f = sep.join([root_f, 'in', catchment, sep])
 
         c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
             get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
-        self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, root_f)
+        self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, in_fmt, root_f)
 
         self.save_sim = save_sim
 
@@ -106,9 +106,9 @@ class SpotPySetUp(object):
         self.database.write(','.join(map(str, line)) + '\n')
 
 
-def spotpy_instructions(catchment, sample_size, parallel, root_f):
+def spotpy_instructions(catchment, sample_size, parallel, in_format, root_f):
 
-    spotpy_setup = SpotPySetUp(catchment, root_f, save_sim=False)
+    spotpy_setup = SpotPySetUp(catchment, root_f, in_format, save_sim=False)
 
     sampler = spotpy.algorithms.lhs(spotpy_setup, parallel=parallel)
 
@@ -130,6 +130,8 @@ if __name__ == '__main__':
                         help="name of the catchment")
     parser.add_argument('sample_size', type=int,
                         help="size of the sample")
+    parser.add_argument('-i', '--in_format', type=valid_file_format, default='csv',
+                        help="format of input data files [csv or netcdf]")
     parser.add_argument('-s', '--sequence', dest='parallelisation', action='store_false',
                         help="compute each sample in sequence ")
     parser.add_argument('-p', '--parallel', dest='parallelisation', action='store_true',
@@ -144,4 +146,4 @@ if __name__ == '__main__':
         parallelisation = 'seq'  # use traditional sequential computing
 
     # Call main function containing SPOTPY instructions
-    spotpy_instructions(args.catchment, args.sample_size, parallelisation, smart_root)
+    spotpy_instructions(args.catchment, args.sample_size, parallelisation, args.in_format, smart_root)

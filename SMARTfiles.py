@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 from fractions import gcd
 from numpy import float64
 from collections import OrderedDict
+from netCDF4 import Dataset
 
 
-def get_dict_rain_series_simu(file_location, start_simu, end_simu, time_delta_simu):
-    dict_rain, start_data, end_data, time_delta_data = read_rain_file(file_location)
+def get_dict_rain_series_simu(file_location, file_format, start_simu, end_simu, time_delta_simu):
+    dict_rain, start_data, end_data, time_delta_data = read_rain_file(file_location, file_format)
 
     if (start_data - time_delta_data + time_delta_simu <= start_simu) and (end_simu <= end_data):
         time_delta_res = get_required_resolution(start_data, start_simu, time_delta_data, time_delta_simu)
@@ -18,8 +19,8 @@ def get_dict_rain_series_simu(file_location, start_simu, end_simu, time_delta_si
         raise Exception('Rain data not sufficient for simulation.')
 
 
-def get_dict_peva_series_simu(file_location, start_simu, end_simu, time_delta_simu):
-    dict_peva, start_data, end_data, time_delta_data = read_peva_file(file_location)
+def get_dict_peva_series_simu(file_location, file_format, start_simu, end_simu, time_delta_simu):
+    dict_peva, start_data, end_data, time_delta_data = read_peva_file(file_location, file_format)
 
     if (start_data - time_delta_data + time_delta_simu <= start_simu) and (end_simu <= end_data):
         time_delta_res = get_required_resolution(start_data, start_simu, time_delta_data, time_delta_simu)
@@ -113,12 +114,20 @@ def get_dict_simulation_settings(file_location):
     return c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint
 
 
-def read_rain_file(file_location):
-    return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='RAIN')
+def read_rain_file(file_location, file_format):
+    if file_format == 'netcdf':
+        return read_netcdf_time_series_with_delta_check(file_location,
+                                                        key_variable='DATETIME', val_variable='RAIN')
+    else:
+        return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='RAIN')
 
 
-def read_peva_file(file_location):
-    return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='PEVA')
+def read_peva_file(file_location, file_format):
+    if file_format == 'netcdf':
+        return read_netcdf_time_series_with_delta_check(file_location,
+                                                        key_variable='DATETIME', val_variable='PEVA')
+    else:
+        return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='PEVA')
 
 
 def read_flow_file(file_location):
@@ -158,6 +167,27 @@ def read_csv_time_series_with_delta_check(csv_file, key_header, val_header):
         return my_dict_data, start_data, end_data, time_delta
     except IOError:
         raise Exception('File {} could not be found.'.format(csv_file))
+
+
+def read_netcdf_time_series_with_delta_check(netcdf_file, key_variable, val_variable):
+    try:
+        with Dataset(netcdf_file, "r") as my_file:
+            my_file.set_auto_mask(False)
+            my_dict_data = dict()
+            my_list_dt = list()
+            try:
+                my_list_dt += [datetime.utcfromtimestamp(tstamp) for tstamp in my_file.variables[key_variable][:]]
+                for idx, dt in enumerate(my_list_dt):
+                    my_dict_data[dt] = my_file.variables[val_variable][idx]
+            except KeyError:
+                raise Exception('Variable {} or {} does not exist in {}.'.format(key_variable, val_variable,
+                                                                                 netcdf_file))
+
+        start_data, end_data, time_delta = check_interval_in_list(my_list_dt, netcdf_file)
+
+        return my_dict_data, start_data, end_data, time_delta
+    except IOError:
+        raise Exception('File {} could not be found.'.format(netcdf_file))
 
 
 def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):

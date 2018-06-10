@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 from os import path, makedirs, sep
+import imp
 import argparse
 
 from SMARTfiles import \
@@ -11,7 +12,7 @@ from SMARTtime import TimeFrame
 
 class SMART(object):
     def __init__(self, catchment, c_area_m2, g_area_m2, start, end,
-                 time_delta_simu, time_delta_report, warm_up_days, root):
+                 time_delta_simu, time_delta_report, warm_up_days, in_fmt, root):
         # general information
         self.catchment = catchment
         self.area = c_area_m2
@@ -31,9 +32,10 @@ class SMART(object):
         self.timeseries_report = self.timeframe.get_series_report()
         self.warm_up = warm_up_days
         # physical information
-        self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain']),
+        extra_ext = '.nc' if in_fmt == 'netcdf' else ''
+        self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain' + extra_ext]), in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
-        self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva']),
+        self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
                                               self.timeframe.get_series_report()[1],
@@ -49,10 +51,10 @@ class SMART(object):
 
 def simulate(catchment_id, c_area_m2, g_area_m2,
              start, end, time_delta_simu, time_delta_report, warm_up_days,
-             root):
+             in_format, root):
 
     smart_model = SMART(catchment_id, c_area_m2, g_area_m2, start, end,
-                        time_delta_simu, time_delta_report, warm_up_days, root)
+                        time_delta_simu, time_delta_report, warm_up_days, in_format, root)
 
     # get sets of parameters
     parameters = get_parameters_from_file(''.join([smart_model.in_f, smart_model.catchment, '.parameters']))
@@ -89,6 +91,23 @@ def valid_delta(n):
         raise argparse.ArgumentTypeError("Not a valid time delta: '{0}'.".format(n))
 
 
+def valid_file_format(fmt):
+    if fmt.lower() == "netcdf":
+        try:
+            imp.find_module('netCDF4')
+            return "netcdf"
+        except ImportError:
+            raise argparse.ArgumentTypeError("NetCDF4 module is not installed, please choose another file format.")
+    elif fmt.lower() == "csv":
+        try:
+            imp.find_module('csv')
+            return "csv"
+        except ImportError:
+            raise argparse.ArgumentTypeError("CSV module is not installed, please choose another file format.")
+    else:
+        raise argparse.ArgumentTypeError("File format not recognised: '{0}'.".format(fmt))
+
+
 if __name__ == '__main__':
     # Define the root of the SMARTpy package
     smart_root = path.realpath('..')  # move to parent directory of this current python file
@@ -112,6 +131,8 @@ if __name__ == '__main__':
                         help="area upstream of the hydrometric gauge in square kilometers")
     parser.add_argument('-w', '--warm_up', type=int, default=365,
                         help="warm-up duration in days")
+    parser.add_argument('-i', '--in_format', type=valid_file_format, default='csv',
+                        help="format of input data files [csv or netcdf]")
 
     args = parser.parse_args()
 
@@ -119,4 +140,4 @@ if __name__ == '__main__':
     simulate(args.catchment,
              args.catchment_area * 1E6, args.gauged_area * 1E6,
              args.start, args.end, args.delta_simu, args.delta_report, args.warm_up,
-             smart_root)
+             args.in_format, smart_root)
