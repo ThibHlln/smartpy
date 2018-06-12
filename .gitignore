@@ -19,6 +19,8 @@ $RECYCLE.BIN/
 
 # Thibault's preferences
 *.pyc
+*.bat
+*.sh
 
 # =========================
 # Operating System Files
