@@ -119,21 +119,21 @@ def get_dict_simulation_settings(file_location):
 def read_rain_file(file_location, file_format):
     if file_format == 'netcdf':
         return read_netcdf_time_series_with_delta_check(file_location,
-                                                        key_variable='DATETIME', val_variable='RAIN')
+                                                        key_variable='DateTime', val_variable='rain')
     else:
-        return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='RAIN')
+        return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='rain')
 
 
 def read_peva_file(file_location, file_format):
     if file_format == 'netcdf':
         return read_netcdf_time_series_with_delta_check(file_location,
-                                                        key_variable='DATETIME', val_variable='PEVA')
+                                                        key_variable='DateTime', val_variable='peva')
     else:
-        return read_csv_time_series_with_delta_check(file_location, key_header='DATETIME', val_header='PEVA')
+        return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='peva')
 
 
 def read_flow_file(file_location):
-    return read_csv_time_series_with_missing_check(file_location, key_header='DATETIME', val_header='FLOW')
+    return read_csv_time_series_with_missing_check(file_location, key_header='DateTime', val_header='flow')
 
 
 def read_simulation_settings_file(file_location):
@@ -229,7 +229,7 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report
     if method == 'summary':
         with open(csv_file, 'wb') as my_file:
             my_writer = writer(my_file, delimiter=',')
-            my_writer.writerow(['DATETIME', 'FLOW'])
+            my_writer.writerow(['DateTime', 'flow'])
             my_index_simu = simu_steps_per_reporting_step   # ignoring first value that is for initial conditions
             my_index_report = 1  # ignoring first value that is for initial conditions
             while my_index_report <= len(my_list_datetime) - 1:
@@ -243,7 +243,7 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report
     elif method == 'raw':
         with open(csv_file, 'wb') as my_file:
             my_writer = writer(my_file, delimiter=',')
-            my_writer.writerow(['DATETIME', 'FLOW'])
+            my_writer.writerow(['DateTime', 'flow'])
             my_index_simu = simu_steps_per_reporting_step  # ignoring first value that is for initial conditions
             my_index_report = 1  # ignoring first value that is for initial conditions
             while my_index_report <= len(my_list_datetime):
@@ -270,7 +270,7 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report
     if method == 'summary':
         with open(csv_file, 'wb') as my_file:
             my_writer = writer(my_file, delimiter=',')
-            my_writer.writerow(['DATETIME', 'FLOW'])
+            my_writer.writerow(['DateTime', 'flow'])
             for step in my_list_datetime[1:]:
                 my_values = list()
                 for my_sub_step in xrange(0, -simu_steps_per_reporting_step, -1):
@@ -281,7 +281,7 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report
     elif method == 'raw':
         with open(csv_file, 'wb') as my_file:
             my_writer = writer(my_file, delimiter=',')
-            my_writer.writerow(['DATETIME', 'FLOW'])
+            my_writer.writerow(['DateTime', 'flow'])
             for step in my_list_datetime[1:]:
                 try:
                     my_writer.writerow([step, '%e' % discharge[step]])
