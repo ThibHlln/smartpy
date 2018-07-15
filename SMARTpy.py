@@ -59,9 +59,6 @@ def simulate(catchment_id, c_area_m2, g_area_m2,
     # get sets of parameters
     parameters = get_parameters_from_file(''.join([smart_model.in_f, smart_model.catchment, '.parameters']))
 
-    # run simulations for each set of parameters
-    db = dict()
-
     # simulate
     dict_discharge, gw_ratio = smart_model.simulate(parameters)
 
@@ -72,9 +69,6 @@ def simulate(catchment_id, c_area_m2, g_area_m2,
     write_flow_file_from_dict(smart_model.timeframe, smart_model.flow,
                               ''.join([smart_model.out_f, catchment_id, '.obs.flow']),
                               method='raw')
-
-    # explicit garbage collection
-    del db
 
 
 def valid_date(s):
