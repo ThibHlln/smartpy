@@ -1,15 +1,12 @@
+import spotpy
+import numpy as np
 import argparse
-from csv import DictReader
-from itertools import izip
 from os import path, getcwd, sep
 
-import numpy as np
-import spotpy
-
-from scripts.SMARTinout import get_dict_simulation_settings
-from scripts.SMARTobjective import \
+from smartpy.SMARTpy import SMART, valid_file_format
+from smartpy.SMARTinout import get_dict_simulation_settings
+from smartpy.SMARTobjective import \
     groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
-from scripts.SMARTpy import SMART, valid_file_format
 
 
 class SpotPySetUp(object):
@@ -31,30 +28,23 @@ class SpotPySetUp(object):
             if self.constraints['gw'] == -999.0 else \
             ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb', 'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW']
 
-        # extract behavioural sets from sampling sets
-        self.sampling_run_file = ''.join([in_f, catchment, '.SMART.lhs'])
-        self.sampled_params, self.sampled_obj_fns = get_sampled_sets_from_file(self.sampling_run_file,
-                                                                               self.param_names,
-                                                                               self.obj_fn_names)
-        self.conditions_values = [(0.75,), (-10, 10), (1.0,)]
-        self.conditions_types = ['min', 'inside', 'equal']
-        self.behavioural_params = get_behavioural_sets(self.sampled_params, self.sampled_obj_fns[:, [0, 9, 13]],
-                                                       self.conditions_values, self.conditions_types)
-        # give list of behavioural parameters
+        # attribute params is a list of Objects (e.g. Uniform, Normal; all having Base as a parent class)
+        # that are callable (where __call__ of Base picks what numpy.random function to use)
         self.params = [
-            spotpy.parameter.List(self.param_names[0], self.behavioural_params[:, 0]),
-            spotpy.parameter.List(self.param_names[1], self.behavioural_params[:, 1]),
-            spotpy.parameter.List(self.param_names[2], self.behavioural_params[:, 2]),
-            spotpy.parameter.List(self.param_names[3], self.behavioural_params[:, 3]),
-            spotpy.parameter.List(self.param_names[4], self.behavioural_params[:, 4]),
-            spotpy.parameter.List(self.param_names[5], self.behavioural_params[:, 5]),
-            spotpy.parameter.List(self.param_names[6], self.behavioural_params[:, 6]),
-            spotpy.parameter.List(self.param_names[7], self.behavioural_params[:, 7]),
-            spotpy.parameter.List(self.param_names[8], self.behavioural_params[:, 8]),
-            spotpy.parameter.List(self.param_names[9], self.behavioural_params[:, 9])
+            spotpy.parameter.Uniform('T', low=0.9, high=1.1),
+            spotpy.parameter.Uniform('C', low=0.0, high=1.0),
+            spotpy.parameter.Uniform('H', low=0.0, high=0.3),
+            spotpy.parameter.Uniform('D', low=0.0, high=1.0),
+            spotpy.parameter.Uniform('S', low=0.0, high=0.013),
+            spotpy.parameter.Uniform('Z', low=15.0, high=150.0),
+            spotpy.parameter.Uniform('SK', low=1.0, high=240.0),
+            spotpy.parameter.Uniform('FK', low=48.0, high=1440.0),
+            spotpy.parameter.Uniform('GK', low=1200.0, high=4800.0),
+            spotpy.parameter.Uniform('RK', low=1.0, high=96.0)
         ]
+
         # set up a database to custom save results
-        self.database = file(self.model.out_f + '{}.SMART.glue'.format(catchment), 'wb')
+        self.database = file(self.model.out_f + '{}.SMART.lhs'.format(catchment), 'wb')
         self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow.iterkeys()] \
             if self.save_sim else []
         # write header in database file
@@ -116,77 +106,13 @@ class SpotPySetUp(object):
         self.database.write(','.join(map(str, line)) + '\n')
 
 
-def get_sampled_sets_from_file(file_location, param_names, obj_fn_names):
-    with open(file_location) as my_file:
-        my_reader = DictReader(my_file)
-        obj_fns, params = list(), list()
-        for row in my_reader:
-            obj_fns.append([row[obj_fn] for obj_fn in obj_fn_names])
-            params.append([row[param] for param in param_names])
+def spotpy_instructions(catchment, sample_size, parallel, in_format, root_f):
 
-    return np.array(params, dtype=np.float64), np.array(obj_fns, dtype=np.float64)
+    spotpy_setup = SpotPySetUp(catchment, root_f, in_format, save_sim=False)
 
+    sampler = spotpy.algorithms.lhs(spotpy_setup, parallel=parallel)
 
-def get_behavioural_sets(params, obj_fns, conditions_val, conditions_typ):
-
-    if obj_fns.ndim != 2:
-        raise Exception('The matrix containing the objective functions is not 2D.')
-    if params.ndim != 2:
-        raise Exception('The matrix containing the parameters is not 2D.')
-    if obj_fns.shape[0] != params.shape[0]:
-        raise Exception('The matrices containing objective functions and parameters have different sample sizes.')
-    if not ((obj_fns.shape[1] == len(conditions_val)) and (obj_fns.shape[1] == len(conditions_typ))):
-        raise Exception('The objective function matrix and the conditions matrices '
-                        'do not have compatible dimensions.')
-
-    behavioural = np.ones((obj_fns.shape[0],), dtype=bool)
-    for obj_fn, values, kind in izip(obj_fns.T, conditions_val, conditions_typ):
-        if kind == 'equal':
-            if len(values) == 1:
-                selection = obj_fn == values[0]
-            else:
-                raise Exception("The tuple for \"equal\" condition does not contain one and only one element.")
-        elif kind == 'min':
-            if len(values) == 1:
-                selection = obj_fn >= values[0]
-            else:
-                raise Exception("The tuple for \"min\" condition does not contain one and only one element.")
-        elif kind == 'max':
-            if len(values) == 1:
-                selection = obj_fn <= values[0]
-            else:
-                raise Exception("The tuple for \"max\" condition does not contain one and only one element.")
-        elif kind == 'inside':
-            if len(values) == 2:
-                if values[1] > values[0]:
-                    selection = (obj_fn >= values[0]) & (obj_fn <= values[1])
-                else:
-                    raise Exception("The two elements of the tuple for \"inside\" are inconsistent.")
-            else:
-                raise Exception("The tuple for \"inside\" condition does not contain two and only two elements.")
-        elif kind == 'outside':
-            if len(values) == 2:
-                if values[1] > values[0]:
-                    selection = (obj_fn <= values[0]) & (obj_fn >= values[1])
-                else:
-                    raise Exception("The two elements of the tuple for \"outside\" are inconsistent.")
-            else:
-                raise Exception("The tuple for \"outside\" condition does not contain two and only two elements.")
-        else:
-            raise Exception("The type of threshold \"{}\" is not in the database.".format(kind))
-
-        behavioural *= selection
-
-    return params[behavioural, :]
-
-
-def spotpy_instructions(catchment, parallel, in_format, root_f):
-
-    spotpy_setup = SpotPySetUp(catchment, root_f, in_format, save_sim=True)
-
-    sampler = spotpy.algorithms.mc(spotpy_setup, parallel=parallel)
-
-    sampler.sample(spotpy_setup.behavioural_params.shape[0])
+    sampler.sample(sample_size)
 
 
 if __name__ == '__main__':
@@ -202,6 +128,8 @@ if __name__ == '__main__':
                                                  "using SPOTPY")
     parser.add_argument('catchment', type=str,
                         help="name of the catchment")
+    parser.add_argument('sample_size', type=int,
+                        help="size of the sample")
     parser.add_argument('-i', '--in_format', type=valid_file_format, default='csv',
                         help="format of input data files [csv or netcdf]")
     parser.add_argument('-s', '--sequence', dest='parallelisation', action='store_false',
@@ -209,13 +137,13 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--parallel', dest='parallelisation', action='store_true',
                         help="parallel computing of the sample  ")
     parser.set_defaults(parallelisation=False)
-    args_ = parser.parse_args()
+    args = parser.parse_args()
 
     # send the relevant argument for parallelisation option
-    if args_.parallelisation:
+    if args.parallelisation:
         parallelisation = 'mpi'  # use MPI and parallel computing
     else:
         parallelisation = 'seq'  # use traditional sequential computing
 
     # Call main function containing SPOTPY instructions
-    spotpy_instructions(args_.catchment, parallelisation, args_.in_format, smart_root)
+    spotpy_instructions(args.catchment, args.sample_size, parallelisation, args.in_format, smart_root)
