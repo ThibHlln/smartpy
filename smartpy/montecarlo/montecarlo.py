@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
+from builtins import map
 import numpy as np
 from os import sep
 
@@ -107,4 +108,4 @@ class MonteCarlo(object):
             line = map(np.float32, obj_fns + parameters.tolist() + simulations[0])
         else:
             line = map(np.float32, obj_fns + parameters.tolist())
-        self.database.write(','.join(map(str, line)) + '\n')
+        self.database.write(','.join(map(lambda x: '%.8e' % x, line)) + '\n')
