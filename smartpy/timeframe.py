@@ -27,74 +27,93 @@ from collections import OrderedDict
 
 class TimeFrame(object):
     """
-    This class defines the temporal attributes of the simulation period. It contains the start and the end of the
-    simulation as well as the lists of DateTime series for the simulation time steps and the reporting time steps (that
-    can be identical or nested).
+    This class gathers the temporal information provided by the user. Then, it defines the temporal attributes
+    for the simulation.
 
-    N.B. 1: The simulation gap needs to be a multiple if the reporting gap and the simulation gap can only
-    be lower than or equal to the report gap
-    N.B. 2: The start and the end of the simulation are defined by the user, the class always adds one data step
-    prior to the start date in order to set the initial conditions, one or more simulation steps are added in
-    consequence depending if the simulation step in a multiple of the data step or not (i.e. equal)
+    Two type of temporal attributes are considered: 'simu' refers to the internal time used by the model (i.e.
+    model temporal discretisation), and 'save' refers to the output from the SMARTpy (i.e. what will be written in the
+    output files).
+
+    For each type, three attributes (start, end, gap) are required to build timeseries.
+
+    In terms of starts/ends, the user is only required to provide them for 'save', start/end for 'simu'
+    are inferred using 'save' start/end/gap and the 'simu' gap.
+
+    In terms of timeseries, both 'simu' and 'save' timeseries are built using their respective start/end/gap.
+
+    To allow for initial conditions to be set up, one or more time steps are added prior the respective starts of
+    'simu' and 'save'. The 'save' time is added one datetime before save_start, while the 'simu' is added one or more
+    datetime if it requires several simu_gap to cover one data_gap.
+
+    N.B. The 'save' gap is required to be a multiple of 'simu' gap because this simulator is not intended to
+    interpolate on the simulation results, the simulator can only extract or summarise from simulation steps.
+    Instead, the user is expected to adapt their simulation gap to match the required reporting gap.
     """
-    def __init__(self, datetime_start, datetime_end, simu_timedelta, report_timedelta):
-        assert datetime_start <= datetime_end, "TimeFrame: Start > End"
-        assert report_timedelta.total_seconds() % simu_timedelta.total_seconds() == 0, \
-            "Reporting TimeDelta is not a multiple of Simulation TimeDelta."
-        assert (datetime_end - datetime_start).total_seconds() % simu_timedelta.total_seconds() == 0, \
-            "Simulation Period is not a multiple of Simulation TimeDelta."
-        # DateTime of the start of the time period simulated
-        self.start = datetime_start
-        # DateTime of the end of the time period simulated
-        self.end = datetime_end
-        # TimeDelta of the simulation
-        self.gap_simu = simu_timedelta
-        # TimeDelta of the reporting
-        self.gap_report = report_timedelta
-        # List of DateTime for the reporting (i.e. list of time steps)
-        self.series_report = TimeFrame._create_list_datetime(self, 'report')
-        # List of DateTime for the simulation (i.e. list of time steps)
-        self.series_simu = TimeFrame._create_list_datetime(self, 'simu')
+    def __init__(self, dt_save_start, dt_save_end,
+                 simu_increment_in_minutes, save_increment_in_minutes):
 
-    def _create_list_datetime(self, option):
-        """
-        This function returns a list of DateTime by using the start and the end of the simulation and the time gap
-        (either the reporting time gap or the simulation time gap, using the option parameter to specify which one).
+        # Time Attributed for Output Data (Save/Write in Files)
+        self.save_start = dt_save_start  # DateTime
+        self.save_end = dt_save_end  # DateTime
+        self.save_gap = save_increment_in_minutes  # Int [minutes]
 
-        N.B. For the initial conditions, the function always adds:
-            - [if 'report' option] one data step prior to the reporting start date
-            - [if 'simu' option] one (or more if reporting gap > simulation gap) simulation step(s)
-            prior to the simulation start date
+        # Time Attributes for Simulation (Internal to the Simulator)
+        self.simu_gap = simu_increment_in_minutes  # Int [minutes]
+        self.simu_start, self.simu_end = \
+            TimeFrame._get_simu_start_end_given_save_start_end(self)  # DateTime, DateTime
 
-        :param option: choice to specify if function should work on reporting or on simulation series
-        :type option: str()
-        :return: a list of DateTime
-        :rtype: list()
-        """
-        extent = self.end - self.start
-        options = {'report': self.gap_report, 'simu': self.gap_simu}
+        # DateTime Series for Data, Save, and Simulation
+        self.save_series = TimeFrame._get_list_save_dt_with_initial_conditions(self)
+        self.simu_series = TimeFrame._get_list_simu_dt_with_initial_conditions(self)
 
-        start_index = int((self.gap_report.total_seconds()) / (options[option].total_seconds()))
-        end_index = int(extent.total_seconds() // (options[option].total_seconds())) + 1
+    def _get_simu_start_end_given_save_start_end(self):
+        # check whether saving/reporting period makes sense on its own
+        if not self.save_start <= self.save_end:
+            raise Exception("Save Start is greater than Save End.")
 
+        # check whether the simulation time gap will allow to report on the saving/reporting time gap
+        if not self.save_gap.total_seconds() % self.simu_gap.total_seconds() == 0:
+            raise Exception("Save Gap is not greater and a multiple of Simulation Gap.")
+
+        # determine the simulation period required to cover the whole saving/reporting period
+        simu_start = self.save_start - self.save_gap + self.simu_gap
+        simu_end = self.save_end
+
+        return simu_start, simu_end
+
+    def _get_list_save_dt_with_initial_conditions(self):
+
+        # generate a list of DateTime for Saving/Reporting Period with one extra prior step for initial conditions
         my_list_datetime = list()
-        for factor in range(-start_index, end_index, 1):  # add one or more datetime before start
-            my_datetime = self.start + factor * options[option]
-            my_list_datetime.append(my_datetime)
+        my_dt = self.save_start - self.save_gap
+        while my_dt <= self.save_end:
+            my_list_datetime.append(my_dt)
+            my_dt += self.save_gap
+
+        return my_list_datetime
+
+    def _get_list_simu_dt_with_initial_conditions(self):
+
+        # generate a list of DateTime for Simulation Period with one extra prior step for initial conditions
+        my_list_datetime = list()
+        my_dt = self.simu_start - self.simu_gap
+        while my_dt <= self.simu_end:
+            my_list_datetime.append(my_dt)
+            my_dt += self.simu_gap
 
         return my_list_datetime
 
     def get_gap_simu(self):
-        return self.gap_simu
+        return self.simu_gap
 
     def get_gap_report(self):
-        return self.gap_report
+        return self.save_gap
 
     def get_series_simu(self):
-        return self.series_simu
+        return self.simu_series
 
-    def get_series_report(self):
-        return self.series_report
+    def get_series_save(self):
+        return self.save_series
 
 
 def valid_date(s):

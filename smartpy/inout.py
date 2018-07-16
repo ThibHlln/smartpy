@@ -263,7 +263,7 @@ def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
 def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report', method='summary'):
     # Select the relevant list of DateTime given the argument used during function call
     if report == 'gap_report':  # standard situation
-        my_list_datetime = timeframe.get_series_report()  # list of DateTime to be written in file
+        my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
         simu_steps_per_reporting_step = \
             int(timeframe.get_gap_report().total_seconds() / timeframe.get_gap_simu().total_seconds())
     elif report == 'gap_simu':  # useful for debugging
@@ -304,7 +304,7 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report
 def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report', method='summary'):
     # Select the relevant list of DateTime given the argument used during function call
     if report == 'gap_report':  # standard situation
-        my_list_datetime = timeframe.get_series_report()  # list of DateTime to be written in file
+        my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
         simu_steps_per_reporting_step = \
             int(timeframe.get_gap_report().total_seconds() / timeframe.get_gap_simu().total_seconds())
     elif report == 'gap_simu':  # useful for debugging
