@@ -2,9 +2,11 @@ from csv import DictReader, writer
 from datetime import datetime, timedelta
 from numpy import float64
 from collections import OrderedDict
+import argparse
+import imp
 from netCDF4 import Dataset
 
-from SMARTtime import get_required_resolution, check_interval_in_list, \
+from .timeframe import get_required_resolution, check_interval_in_list, \
     rescale_time_resolution_of_irregular_mean_data, rescale_time_resolution_of_regular_cumulative_data
 
 
@@ -289,3 +291,20 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report
                     my_writer.writerow([step, ''])
     else:
         raise Exception("Unknown method for updating simulations files.")
+
+
+def valid_file_format(fmt):
+    if fmt.lower() == "netcdf":
+        try:
+            imp.find_module('netCDF4')
+            return "netcdf"
+        except ImportError:
+            raise argparse.ArgumentTypeError("NetCDF4 module is not installed, please choose another file format.")
+    elif fmt.lower() == "csv":
+        try:
+            imp.find_module('csv')
+            return "csv"
+        except ImportError:
+            raise argparse.ArgumentTypeError("CSV module is not installed, please choose another file format.")
+    else:
+        raise argparse.ArgumentTypeError("File format not recognised: '{0}'.".format(fmt))

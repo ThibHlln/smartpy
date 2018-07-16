@@ -1,9 +1,9 @@
 try:
-    import SMARTc
-    smart_in_c = True
+    import smartcpp
+    smart_in_cpp = True
 except ImportError:
-    SMARTc = None
-    smart_in_c = False
+    smartcpp = None
+    smart_in_cpp = False
 
 
 def run(area_m2, delta,
@@ -30,9 +30,9 @@ def run(area_m2, delta,
     :return:
     """
 
-    # determine whether SMARTc (C++ extension of SMART for Python) can be used or not
-    if smart_in_c:
-        one_step = SMARTc.onestep
+    # determine whether SMARTcpp (C++ extension of SMART for Python) can be used or not
+    if smart_in_cpp:
+        one_step = smartcpp.onestep
     else:
         one_step = run_one_step
 

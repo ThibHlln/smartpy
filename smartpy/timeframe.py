@@ -1,5 +1,6 @@
 from fractions import gcd
-from datetime import timedelta
+from datetime import datetime, timedelta
+import argparse
 from collections import OrderedDict
 
 
@@ -9,7 +10,7 @@ class TimeFrame(object):
     simulation as well as the lists of DateTime series for the simulation time steps and the reporting time steps (that
     can be identical or nested).
 
-    N.B. 1: The simulation gap needs to be a multiple if the reporting gap and the simulation gap can ony
+    N.B. 1: The simulation gap needs to be a multiple if the reporting gap and the simulation gap can only
     be lower than or equal to the report gap
     N.B. 2: The start and the end of the simulation are defined by the user, the class always adds one data step
     prior to the start date in order to set the initial conditions, one or more simulation steps are added in
@@ -73,6 +74,20 @@ class TimeFrame(object):
 
     def get_series_report(self):
         return self.series_report
+
+
+def valid_date(s):
+    try:
+        return datetime.strptime(s, "%d/%m/%Y_%H:%M:%S")
+    except ValueError:
+        raise argparse.ArgumentTypeError("Not a valid date: '{0}'.".format(s))
+
+
+def valid_delta_min(n):
+    try:
+        return timedelta(minutes=int(n))
+    except ValueError:
+        raise argparse.ArgumentTypeError("Not a valid time delta: '{0}'.".format(n))
 
 
 def check_interval_in_list(list_of_dt, csv_file):
