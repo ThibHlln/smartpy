@@ -1,5 +1,7 @@
 from csv import DictReader
 
+from .inout import open_csv_rb
+
 
 class Parameters(object):
     def __init__(self):
@@ -21,7 +23,7 @@ class Parameters(object):
     def get_parameters_from_file(self, file_location):
         my_dict_par = dict()
         try:
-            with open(file_location, 'rb') as my_file:
+            with open_csv_rb(file_location) as my_file:
                 my_reader = DictReader(my_file)
                 for row in my_reader:
                     if row['PAR_NAME'] in self.names:

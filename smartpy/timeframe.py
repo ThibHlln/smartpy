@@ -1,3 +1,4 @@
+from builtins import range
 from fractions import gcd
 from datetime import datetime, timedelta
 import argparse
@@ -57,7 +58,7 @@ class TimeFrame(object):
         end_index = int(extent.total_seconds() // (options[option].total_seconds())) + 1
 
         my_list_datetime = list()
-        for factor in xrange(-start_index, end_index, 1):  # add one or more datetime before start
+        for factor in range(-start_index, end_index, 1):  # add one or more datetime before start
             my_datetime = self.start + factor * options[option]
             my_list_datetime.append(my_datetime)
 
@@ -128,7 +129,7 @@ def increase_time_resolution_of_regular_cumulative_data(dict_info, start_lo, end
     while (start_lo <= my_dt_lo) and (my_dt_lo <= end_lo):
         my_value = dict_info[my_dt_lo]
         my_portion = my_value / divisor
-        for my_sub_step in xrange(0, -divisor, -1):
+        for my_sub_step in range(0, -divisor, -1):
             new_dict_info[my_dt_lo + my_sub_step * time_delta_hi] = my_portion
         my_dt_lo += time_delta_lo
 
@@ -149,7 +150,7 @@ def decrease_time_resolution_of_regular_cumulative_data(dict_info, start_lo, end
     new_dict_info = dict()
     while (start_lo <= my_dt_lo) and (my_dt_lo <= end_lo):
         my_portion = 0.0
-        for my_sub_step in xrange(0, -divisor, -1):
+        for my_sub_step in range(0, -divisor, -1):
             my_portion += dict_info[my_dt_lo + my_sub_step * time_delta_hi]
         new_dict_info[my_dt_lo] = my_portion
         my_dt_lo += time_delta_lo
@@ -211,7 +212,7 @@ def increase_time_resolution_of_irregular_mean_data(dict_info, time_delta_lo, ti
         except ValueError:  # no data for this time step
             my_value = float('nan')
         # spread the hourly value backwards
-        for my_sub_step in xrange(0, -divisor, -1):
+        for my_sub_step in range(0, -divisor, -1):
             if new_dict_info.get(my_dt + my_sub_step * time_delta_hi):  # should not happen
                 raise Exception("Increase Resolution: Overwriting already existing data for datetime.")
             else:
@@ -236,7 +237,7 @@ def decrease_time_resolution_of_irregular_mean_data(dict_info, dt_start, dt_end,
     while (dt_start <= my_dt) and (my_dt <= dt_end):
         try:
             my_values = 0.0
-            for my_sub_step in xrange(0, -divisor, -1):
+            for my_sub_step in range(0, -divisor, -1):
                 my_values += dict_info[my_dt + my_sub_step * time_delta_hi]
             new_dict_info[my_dt] = my_values / divisor
             my_dt += time_delta_lo

@@ -1,13 +1,37 @@
+from builtins import range
 from csv import DictReader, writer
 from datetime import datetime, timedelta
 from numpy import float64
 from collections import OrderedDict
+import sys
+import io
 import argparse
 import imp
 from netCDF4 import Dataset
 
 from .timeframe import get_required_resolution, check_interval_in_list, \
     rescale_time_resolution_of_irregular_mean_data, rescale_time_resolution_of_regular_cumulative_data
+
+
+def open_csv_rb(my_file):
+    if sys.version_info[0] < 3:
+        return io.open(my_file, 'rb')
+    else:
+        return io.open(my_file, 'r', encoding='utf8')
+
+
+def open_csv_wb(my_file):
+    if sys.version_info[0] < 3:
+        return io.open(my_file, 'wb')
+    else:
+        return io.open(my_file, 'w', newline='', encoding='utf8')
+
+
+def open_csv_ab(my_file):
+    if sys.version_info[0] < 3:
+        return io.open(my_file, 'ab')
+    else:
+        return io.open(my_file, 'a', newline='', encoding='utf8')
 
 
 def get_dict_rain_series_simu(file_location, file_format, start_simu, end_simu, time_delta_simu):
@@ -141,7 +165,7 @@ def read_flow_file(file_location):
 def read_simulation_settings_file(file_location):
     my_dict_args = dict()
     try:
-        with open(file_location, 'rb') as my_file:
+        with open_csv_rb(file_location) as my_file:
             my_reader = DictReader(my_file)
             for row in my_reader:
                 my_dict_args[row['ARGUMENT']] = row['VALUE']
@@ -155,7 +179,7 @@ def read_simulation_settings_file(file_location):
 
 def read_csv_time_series_with_delta_check(csv_file, key_header, val_header):
     try:
-        with open(csv_file, 'rb') as my_file:
+        with open_csv_rb(csv_file) as my_file:
             my_dict_data = dict()
             my_list_dt = list()
             my_reader = DictReader(my_file)
@@ -196,7 +220,7 @@ def read_netcdf_time_series_with_delta_check(netcdf_file, key_variable, val_vari
 
 def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
     try:
-        with open(csv_file, 'rb') as my_file:
+        with open_csv_rb(csv_file) as my_file:
             my_dict_data = OrderedDict()
             my_reader = DictReader(my_file)
             try:
@@ -229,21 +253,21 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report
         raise Exception('Unknown reporting time gap for updating simulations files.')
 
     if method == 'summary':
-        with open(csv_file, 'wb') as my_file:
+        with open_csv_wb(csv_file) as my_file:
             my_writer = writer(my_file, delimiter=',')
             my_writer.writerow(['DateTime', 'flow'])
             my_index_simu = simu_steps_per_reporting_step   # ignoring first value that is for initial conditions
             my_index_report = 1  # ignoring first value that is for initial conditions
             while my_index_report <= len(my_list_datetime) - 1:
                 my_values = list()
-                for my_sub_index in xrange(0, -simu_steps_per_reporting_step, -1):
+                for my_sub_index in range(0, -simu_steps_per_reporting_step, -1):
                     my_values.append(discharge[my_index_simu + my_sub_index])
                 my_value = sum(my_values) / len(my_values)
                 my_writer.writerow([my_list_datetime[my_index_report], '%e' % my_value])
                 my_index_simu += simu_steps_per_reporting_step
                 my_index_report += 1
     elif method == 'raw':
-        with open(csv_file, 'wb') as my_file:
+        with open_csv_wb(csv_file) as my_file:
             my_writer = writer(my_file, delimiter=',')
             my_writer.writerow(['DateTime', 'flow'])
             my_index_simu = simu_steps_per_reporting_step  # ignoring first value that is for initial conditions
@@ -270,18 +294,18 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report
         raise Exception('Unknown reporting time gap for updating simulations files.')
 
     if method == 'summary':
-        with open(csv_file, 'wb') as my_file:
+        with open_csv_wb(csv_file) as my_file:
             my_writer = writer(my_file, delimiter=',')
             my_writer.writerow(['DateTime', 'flow'])
             for step in my_list_datetime[1:]:
                 my_values = list()
-                for my_sub_step in xrange(0, -simu_steps_per_reporting_step, -1):
+                for my_sub_step in range(0, -simu_steps_per_reporting_step, -1):
                     my_values.append(
                         discharge[step + my_sub_step * timeframe.gap_simu])
                 my_value = sum(my_values) / len(my_values)
                 my_writer.writerow([step, '%e' % my_value])
     elif method == 'raw':
-        with open(csv_file, 'wb') as my_file:
+        with open_csv_wb(csv_file) as my_file:
             my_writer = writer(my_file, delimiter=',')
             my_writer.writerow(['DateTime', 'flow'])
             for step in my_list_datetime[1:]:

@@ -1,5 +1,6 @@
 from csv import DictReader
-from itertools import izip
+import numpy as np
+from builtins import zip
 
 try:
     import spotpy
@@ -80,7 +81,7 @@ class GLUE(MonteCarlo):
                             'do not have compatible dimensions.')
 
         behavioural = np.ones((obj_fns.shape[0],), dtype=bool)
-        for obj_fn, values, kind in izip(obj_fns.T, conditions_val, conditions_typ):
+        for obj_fn, values, kind in zip(obj_fns.T, conditions_val, conditions_typ):
             if kind == 'equal':
                 if len(values) == 1:
                     selection = obj_fn == values[0]

@@ -1,5 +1,6 @@
 from csv import DictReader
-from itertools import izip
+import numpy as np
+from builtins import zip
 
 try:
     import spotpy
@@ -91,7 +92,7 @@ class Best(MonteCarlo):
             raise Exception('The number of best models requested is higher than the sample size.')
 
         constrained = np.ones((constraints_fns.shape[0],), dtype=bool)
-        for obj_fn, values, kind in izip(constraints_fns.T, constraints_val, constraints_typ):
+        for obj_fn, values, kind in zip(constraints_fns.T, constraints_val, constraints_typ):
             if kind == 'equal':
                 if len(values) == 1:
                     selection = obj_fn == values[0]

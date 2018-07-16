@@ -4,11 +4,11 @@ from os import sep
 try:
     import spotpy
 except ImportError:
-    raise Exception('montecarlo.lhs requires the package spotpy to be installed.')
+    raise Exception('montecarlo requires the package spotpy to be installed.')
 
-from smartpy.smart import SMART
-from smartpy.inout import get_dict_simulation_settings
-from smartpy.objfunctions import \
+from ..smart import SMART
+from ..inout import get_dict_simulation_settings, open_csv_wb
+from ..objfunctions import \
     groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
 
 
@@ -34,7 +34,7 @@ class MonteCarlo(object):
              'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW']
 
         # set up a database to custom save results
-        self.database = file(self.model.out_f + '{}.SMART.{}'.format(catchment, func), 'wb')
+        self.database = open_csv_wb(self.model.out_f + '{}.SMART.{}'.format(catchment, func))
         self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow.iterkeys()] \
             if self.save_sim else []
 
