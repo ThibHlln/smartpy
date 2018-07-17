@@ -20,6 +20,8 @@ class TestRunDaily2Hourly(unittest.TestCase):
             root="examples/"
         )
 
+        self.sm.extra = {'aar': 1200, 'r-o_ratio': 0.45, 'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)}
+
         self.expected_outcome = {
             datetime.strptime('2007-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'): 4.1350823716e+00,
             datetime.strptime('2007-01-02 09:00:00', '%Y-%m-%d %H:%M:%S'): 3.7619768927e+00,
