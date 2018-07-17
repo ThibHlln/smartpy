@@ -27,8 +27,8 @@ from .montecarlo import MonteCarlo
 
 
 class LHS(MonteCarlo):
-    def __init__(self, catchment, root_f, in_fmt, save_sim=False):
-        MonteCarlo.__init__(self, catchment, root_f, in_fmt, save_sim=save_sim, func='lhs')
+    def __init__(self, catchment, root_f, in_format, save_sim=False):
+        MonteCarlo.__init__(self, catchment, root_f, in_format, save_sim=save_sim, func='lhs')
 
         # attribute params is a list of Objects (e.g. Uniform, Normal; all having Base as a parent class)
         # that are callable (where __call__ of Base picks what numpy.random function to use)

@@ -34,13 +34,13 @@ from ..objfunctions import \
 
 
 class MonteCarlo(object):
-    def __init__(self, catchment, root_f, in_fmt, save_sim=False, func=None):
+    def __init__(self, catchment, root_f, in_format, save_sim=False, func=None):
         in_f = sep.join([root_f, 'in', catchment, sep])
 
         c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
             get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
-        self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, in_fmt, root_f)
+        self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, in_format, root_f)
 
         self.save_sim = save_sim
 

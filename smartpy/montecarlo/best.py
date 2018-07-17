@@ -31,8 +31,8 @@ from .montecarlo import MonteCarlo
 
 
 class Best(MonteCarlo):
-    def __init__(self, catchment, target, nb_best, constraining, root_f, in_fmt, save_sim=False):
-        MonteCarlo.__init__(self, catchment, root_f, in_fmt, save_sim=save_sim, func='{}best'.format(nb_best))
+    def __init__(self, catchment, target, nb_best, constraining, root_f, in_format, save_sim=False):
+        MonteCarlo.__init__(self, catchment, root_f, in_format, save_sim=save_sim, func='{}best'.format(nb_best))
 
         # extract behavioural sets from sampling sets
         self.sampling_run_file = ''.join([self.model.out_f, catchment, '.SMART.lhs'])

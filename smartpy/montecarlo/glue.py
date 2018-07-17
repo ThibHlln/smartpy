@@ -31,8 +31,8 @@ from .montecarlo import MonteCarlo
 
 
 class GLUE(MonteCarlo):
-    def __init__(self, catchment, root_f, in_fmt, conditioning, save_sim=False):
-        MonteCarlo.__init__(self, catchment, root_f, in_fmt, save_sim=save_sim, func='glue')
+    def __init__(self, catchment, root_f, in_format, conditioning, save_sim=False):
+        MonteCarlo.__init__(self, catchment, root_f, in_format, save_sim=save_sim, func='glue')
 
         # extract behavioural sets from sampling sets
         self.sampling_run_file = ''.join([self.model.out_f, catchment, '.SMART.lhs'])
