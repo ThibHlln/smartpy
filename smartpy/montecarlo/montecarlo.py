@@ -55,7 +55,8 @@ class MonteCarlo(object):
              'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW']
 
         # set up a database to custom save results
-        self.database = open_csv_wb(self.model.out_f + '{}.SMART.{}'.format(catchment, func))
+        self.db_file = self.model.out_f + '{}.SMART.{}'.format(catchment, func)
+        self.database = open_csv_wb(self.db_file)
         self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow.iterkeys()] \
             if self.save_sim else []
 
