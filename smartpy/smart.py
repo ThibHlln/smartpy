@@ -19,6 +19,8 @@
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
 from os import path, makedirs, sep
+import numpy as np
+from builtins import dict
 
 from .timeframe import TimeFrame
 from .parameters import Parameters
@@ -86,3 +88,13 @@ class SMART(object):
         else:
             raise Exception("The output files cannot be written because the outputs attribute is unassigned."
                             "Please make sure to call the simulate method before writing the output files.")
+
+    def get_simulation_array(self):
+        if self.outputs:
+            return np.asarray([self.discharge[dt] for dt in self.flow])
+        else:
+            raise Exception("The simulation array cannot be provided because the outputs attribute is unassigned."
+                            "Please make sure to call the simulate method before requesting the simulation array.")
+
+    def get_evaluation_array(self):
+        return np.asarray([val for val in self.flow.values()])
