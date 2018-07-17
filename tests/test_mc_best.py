@@ -1,14 +1,13 @@
 import unittest
 from csv import reader
-import smartpy
-from smartpy import inout
+from smartpy import inout, montecarlo
 
 
 class TestMonteCarloBest(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
-        self.setup = smartpy.Best(
+        self.setup = montecarlo.Best(
             catchment='ExampleDaily',
             target='NSE',
             nb_best=1,
