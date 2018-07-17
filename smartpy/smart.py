@@ -29,7 +29,7 @@ from .structure import run
 
 class SMART(object):
     def __init__(self, catchment, c_area_m2, g_area_m2, start, end,
-                 time_delta_simu, time_delta_save, warm_up_days, in_fmt, root):
+                 time_delta_simu, time_delta_save, warm_up_days, in_format, root):
         # general information
         self.catchment = catchment
         self.area = c_area_m2
@@ -49,10 +49,10 @@ class SMART(object):
         self.timeseries_report = self.timeframe.get_series_save()
         self.warm_up = warm_up_days
         # physical information
-        extra_ext = '.nc' if in_fmt == 'netcdf' else ''
-        self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain' + extra_ext]), in_fmt,
+        extra_ext = '.nc' if in_format == 'netcdf' else ''
+        self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain' + extra_ext]), in_format,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
-        self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), in_fmt,
+        self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), in_format,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
                                               self.timeframe.get_series_save()[1],
@@ -63,6 +63,7 @@ class SMART(object):
         # model outputs
         self.outputs = None
         self.discharge = None
+        self.gw_contribution = None
 
     def simulate(self, param):
         db = dict()
@@ -70,6 +71,7 @@ class SMART(object):
                            param, db, self.timeseries, self.timeseries_report,
                            warm_up=self.warm_up)
         self.discharge = self.outputs[0]
+        self.gw_contribution = self.outputs[1]
         return self.outputs
 
     def write_output_files(self):
