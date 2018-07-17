@@ -1,0 +1,9 @@
+ARGUMENT,VALUE
+catchment_area_km2,175.46
+gauged_area_km2,175.97
+start_datetime,01/01/2007 09:00:00
+end_datetime,31/12/2016 09:00:00
+simu_timedelta_min,60
+report_timedelta_min,1440
+warm_up_days,365
+gw_constraint,0.12667
