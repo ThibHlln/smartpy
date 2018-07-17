@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from builtins import map, dict
+from builtins import map
 import numpy as np
 from os import sep
 
@@ -57,7 +57,7 @@ class MonteCarlo(object):
         # set up a database to custom save results
         self.db_file = self.model.out_f + '{}.SMART.{}'.format(catchment, func)
         self.database = open_csv_wb(self.db_file)
-        self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow.iterkeys()] \
+        self.simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow] \
             if self.save_sim else []
 
         # write header in database file
