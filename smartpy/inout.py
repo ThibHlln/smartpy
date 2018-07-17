@@ -27,7 +27,10 @@ import sys
 import io
 import argparse
 import imp
-from netCDF4 import Dataset
+try:
+    from netCDF4 import Dataset
+except ImportError:
+    Dataset = None
 
 from .timeframe import get_required_resolution, check_interval_in_list, \
     rescale_time_resolution_of_irregular_mean_data, rescale_time_resolution_of_regular_cumulative_data
@@ -164,16 +167,22 @@ def get_dict_simulation_settings(file_location):
 
 def read_rain_file(file_location, file_format):
     if file_format == 'netcdf':
-        return read_netcdf_time_series_with_delta_check(file_location,
-                                                        key_variable='DateTime', val_variable='rain')
+        if Dataset:
+            return read_netcdf_time_series_with_delta_check(file_location, key_variable='DateTime', val_variable='rain')
+        else:
+            raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
+                            "please install it and retry, or choose another file format.")
     else:
         return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='rain')
 
 
 def read_peva_file(file_location, file_format):
     if file_format == 'netcdf':
-        return read_netcdf_time_series_with_delta_check(file_location,
-                                                        key_variable='DateTime', val_variable='peva')
+        if Dataset:
+            return read_netcdf_time_series_with_delta_check(file_location, key_variable='DateTime', val_variable='peva')
+        else:
+            raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
+                            "please install it and retry, or choose another file format.")
     else:
         return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='peva')
 
@@ -260,13 +269,13 @@ def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
         raise Exception('File {} could not be found.'.format(csv_file))
 
 
-def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report', method='summary'):
+def write_flow_file_from_list(timeframe, discharge, csv_file, report='save_gap', method='summary'):
     # Select the relevant list of DateTime given the argument used during function call
-    if report == 'gap_report':  # standard situation
+    if report == 'save_gap':  # standard situation
         my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
         simu_steps_per_reporting_step = \
             int(timeframe.get_gap_report().total_seconds() / timeframe.get_gap_simu().total_seconds())
-    elif report == 'gap_simu':  # useful for debugging
+    elif report == 'simu_gap':  # useful for debugging
         my_list_datetime = timeframe.get_series_simu()  # list of DateTime to be written in file
         simu_steps_per_reporting_step = 1
     else:
@@ -301,13 +310,13 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='gap_report
         raise Exception("Unknown method for updating simulations files.")
 
 
-def write_flow_file_from_dict(timeframe, discharge, csv_file, report='gap_report', method='summary'):
+def write_flow_file_from_dict(timeframe, discharge, csv_file, report='save_gap', method='summary'):
     # Select the relevant list of DateTime given the argument used during function call
-    if report == 'gap_report':  # standard situation
+    if report == 'save_gap':  # standard situation
         my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
         simu_steps_per_reporting_step = \
             int(timeframe.get_gap_report().total_seconds() / timeframe.get_gap_simu().total_seconds())
-    elif report == 'gap_simu':  # useful for debugging
+    elif report == 'simu_gap':  # useful for debugging
         my_list_datetime = timeframe.get_series_simu()  # list of DateTime to be written in file
         simu_steps_per_reporting_step = 1
     else:
