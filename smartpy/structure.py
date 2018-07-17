@@ -29,7 +29,7 @@ except ImportError:
 
 def run(area_m2, delta,
         rain, peva,
-        parameters,
+        parameters, extra,
         database, timeseries, timeseries_report,
         report='summary',
         **kwargs):
@@ -66,12 +66,34 @@ def run(area_m2, delta,
         warm_up_end_index = int(kwargs['warm_up'] * 86400 / delta.total_seconds()) + 1
         database_wu = {timeseries[0]: {name: 0.0 for name in model_outputs}}
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 60/30/10% GW/Soil/Surface)
-        database_wu[timeseries[0]].update({'V_river': (1200 * 0.45) / 1000 * area_m2 / 8766 * parameters['RK'],
-                                           'V_ove': (1200 * 0.45) * 0.10 / 1000 * area_m2 / 8766 * parameters['SK'],
-                                           'V_int': (1200 * 0.45) * 0.15 / 1000 * area_m2 / 8766 * parameters['FK'],
-                                           'V_dra': (1200 * 0.45) * 0.15 / 1000 * area_m2 / 8766 * parameters['FK'],
-                                           'V_sgw': (1200 * 0.45) * 0.30 / 1000 * area_m2 / 8766 * parameters['GK'],
-                                           'V_dgw': (1200 * 0.45) * 0.30 / 1000 * area_m2 / 8766 * parameters['GK']})
+        if extra:
+            database_wu[timeseries[0]].update(
+                {'V_river': (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * parameters['RK'],
+                 'V_ove':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] /
+                     1000 * area_m2 / 8766 * parameters['SK'],
+                 'V_int':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] /
+                     1000 * area_m2 / 8766 * parameters['FK'],
+                 'V_dra':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] /
+                     1000 * area_m2 / 8766 * parameters['FK'],
+                 'V_sgw':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] /
+                     1000 * area_m2 / 8766 * parameters['GK'],
+                 'V_dgw':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] /
+                     1000 * area_m2 / 8766 * parameters['GK']}
+            )
+        else:
+            database_wu[timeseries[0]].update(
+                {'V_river': 0.0,
+                 'V_ove': 0.0,
+                 'V_int': 0.0,
+                 'V_dra': 0.0,
+                 'V_sgw': 0.0,
+                 'V_dgw': 0.0}
+            )
         # start with soil layers half full (six soil layers so half gives /12)
         database_wu[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
                                            for name in model_states_soil_layers})  # six soil layers so half gives /12
@@ -85,12 +107,34 @@ def run(area_m2, delta,
     else:  # or starting without warm-up run
         database[timeseries[0]] = {name: 0.0 for name in model_outputs}
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 10/30/60% Surface/Soil/GW)
-        database[timeseries[0]].update({'V_river': (1200 * 0.45) / 1000 * area_m2 / 8766 * parameters['RK'],
-                                        'V_ove': (1200 * 0.45) * 0.10 / 1000 * area_m2 / 8766 * parameters['SK'],
-                                        'V_int': (1200 * 0.45) * 0.15 / 1000 * area_m2 / 8766 * parameters['FK'],
-                                        'V_dra': (1200 * 0.45) * 0.15 / 1000 * area_m2 / 8766 * parameters['FK'],
-                                        'V_sgw': (1200 * 0.45) * 0.30 / 1000 * area_m2 / 8766 * parameters['GK'],
-                                        'V_dgw': (1200 * 0.45) * 0.30 / 1000 * area_m2 / 8766 * parameters['GK']})
+        if extra:
+            database[timeseries[0]].update(
+                {'V_river': (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * parameters['RK'],
+                 'V_ove':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] /
+                     1000 * area_m2 / 8766 * parameters['SK'],
+                 'V_int':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] /
+                     1000 * area_m2 / 8766 * parameters['FK'],
+                 'V_dra':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] /
+                     1000 * area_m2 / 8766 * parameters['FK'],
+                 'V_sgw':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] /
+                     1000 * area_m2 / 8766 * parameters['GK'],
+                 'V_dgw':
+                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] /
+                     1000 * area_m2 / 8766 * parameters['GK']}
+            )
+        else:
+            database[timeseries[0]].update(
+                {'V_river': 0.0,
+                 'V_ove': 0.0,
+                 'V_int': 0.0,
+                 'V_dra': 0.0,
+                 'V_sgw': 0.0,
+                 'V_dgw': 0.0}
+            )
         # start with soil layers half full (six soil layers so half gives /12)
         database[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
                                         for name in model_states_soil_layers})

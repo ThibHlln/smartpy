@@ -60,6 +60,8 @@ class SMART(object):
                                               self.timeframe.get_series_save()[1],
                                               self.timeframe.get_series_save()[-1],
                                               c_area_m2, g_area_m2)
+        # optional extra information for setting up initial levels in reservoirs
+        self.extra = None
         # parameters
         self.parameters = Parameters()
         # model outputs
@@ -70,7 +72,7 @@ class SMART(object):
     def simulate(self, param):
         db = dict()
         self.outputs = run(self.area, self.delta_simu, self.rain, self.peva,
-                           param, db, self.timeseries, self.timeseries_report,
+                           param, self.extra, db, self.timeseries, self.timeseries_report,
                            warm_up=self.warm_up)
         self.discharge = self.outputs[0]
         self.gw_contribution = self.outputs[1]
