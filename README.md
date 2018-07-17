@@ -50,6 +50,8 @@ Additional optional dependencies include `netCDF4` if one wishes to use NetCDF f
 
 ## Version History
 
+* 0.1.1 [17 Jul 2018]: Version with proper PyPI display
+	* Fixes display issue of README.md on PyPI
 * 0.1.0 [17 Jul 2018]: First version of SMARTpy
 
 ## Acknowledgment
