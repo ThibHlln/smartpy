@@ -1,6 +1,4 @@
 import unittest
-from datetime import datetime, timedelta
-import numpy as np
 from csv import reader
 import smartpy
 from smartpy import inout
