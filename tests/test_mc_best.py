@@ -24,7 +24,7 @@ class TestMonteCarloBest(unittest.TestCase):
             '2.18063840e-04', '1.01668373e+02', '6.14925117e+01', '1.26650793e+03', '4.35021484e+03', '8.41531677e+01'
         ]
 
-    def test_outlet_node(self):
+    def test_compare_one_best(self):
         # run the SMART model
         self.setup.run(parallel='seq')
 
@@ -32,7 +32,7 @@ class TestMonteCarloBest(unittest.TestCase):
         my_res = list()
         with inout.open_csv_rb(self.setup.db_file) as my_file:
             my_reader = reader(my_file)
-            next(my_reader)  # skip first row that is the headers
+            # next(my_reader)  # skip first row that is the headers
             for row in my_reader:
                 my_res = row
 
