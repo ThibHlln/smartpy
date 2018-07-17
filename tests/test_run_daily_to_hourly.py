@@ -114,7 +114,11 @@ class TestRunDaily2Hourly(unittest.TestCase):
             datetime.strptime('2016-12-31 09:00:00', '%Y-%m-%d %H:%M:%S'): 8.3091723923e-01
         }
 
-    def test_outlet_node(self):
+    def test_compare_discharge_series(self):
+        # get the parameter values
+        self.sm.parameters.get_parameters_from_file(
+            ''.join([self.sm.in_f, self.sm.catchment, '.parameters']))
+
         # run the SMART model
         self.sm.simulate(self.sm.parameters.values)
 
