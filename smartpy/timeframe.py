@@ -229,7 +229,7 @@ def increase_time_resolution_of_irregular_mean_data(dict_info, time_delta_lo, ti
     """
     new_dict_info = dict()
     # get the series of DateTime in the data
-    my_dts = dict_info.keys()
+    my_dts = list(dict_info)
     # special case for first datetime that does not have an antecedent value
     my_dts.insert(0, my_dts[0] - time_delta_lo)  # add one virtual date before
 
