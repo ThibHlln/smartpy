@@ -116,7 +116,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
 
     def test_outlet_node(self):
         # run the SMART model
-        self.sm.simulate(self.sm.parameters)
+        self.sm.simulate(self.sm.parameters.values)
 
         # round all values to 12 decimals
         my_res = dict()

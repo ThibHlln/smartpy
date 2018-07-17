@@ -26,7 +26,7 @@ class TestMonteCarloBest(unittest.TestCase):
 
     def test_outlet_node(self):
         # run the SMART model
-        self.setup.run(parallel=False)
+        self.setup.run(parallel='seq')
 
         # read in values from output folder
         my_res = list()
