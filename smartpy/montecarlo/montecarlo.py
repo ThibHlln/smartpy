@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from builtins import map
+from builtins import map, dict
 import numpy as np
 from os import sep
 
@@ -69,13 +69,13 @@ class MonteCarlo(object):
         })
         # returns only simulations with observations
         return [
-            [simulations[dt] for dt in self.model.flow.iterkeys()],
+            [simulations[dt] for dt in self.model.flow],
             [constraint]
         ]
 
     def evaluation(self):
         return [
-            np.asarray([observation for observation in self.model.flow.itervalues()]),
+            np.asarray([observation for observation in self.model.flow.values()]),
             [self.constraints['gw']]
         ]
 

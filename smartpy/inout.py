@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from builtins import range
+from builtins import range, dict
 from csv import DictReader, writer
 from datetime import datetime, timedelta
 from numpy import float64
