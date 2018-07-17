@@ -93,7 +93,7 @@ def get_dict_discharge_series(file_location, start_report, end_report, catchment
 
     # select subset of observations in simulation period + apply scaling factor
     dict_flow = OrderedDict()
-    for dt in data_flow.iterkeys():
+    for dt in data_flow:
         d = dt.date()
         if (start_date <= d) and (d <= end_date):
             dict_flow[dt] = data_flow[dt] * scaling_factor
