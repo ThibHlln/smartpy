@@ -1,4 +1,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![PyPI Version](https://badge.fury.io/py/smartpy.svg)](https://pypi.python.org/pypi/smartpy)
+[![Travis CI Build Status](https://www.travis-ci.org/ThibHlln/smartpy.svg?branch=master)](https://www.travis-ci.org/ThibHlln/smartpy)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/ThibHlln/smartpy?branch=master&svg=true)](https://ci.appveyor.com/project/ThibHlln/smartpy)
 
 # SMARTpy - An open-source version of the rainfall-runoff model SMART in Python
 
