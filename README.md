@@ -1,3 +1,5 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 # SMARTpy - An open-source version of the rainfall-runoff model SMART in Python
 
 SMARTpy is an open-source hydrological catchment model in Python. It is licensed under GNU GPL-3.0 (see license file provided). SMART (Soil Moisture Accounting and Routing for Transport) is a top-down rainfall-runoff model composed of a soil moisture accounting component and linear routing components. It requires rainfall and potential evapotranspiration time series as inputs, it features a set of ten parameters, and it yields a discharge time series.
@@ -31,3 +33,7 @@ Mockler, E., O’Loughlin, F., and Bruen, M.: Understanding hydrological flow pa
 ## Version History
 
 * 0.1.0 [17 Jul 2018]: First version of SMARTpy
+
+## Acknowledgment
+
+This tool was developed with the financial support of Ireland's Environmental Protection Agency (Grant Number 2014-W-LS-5).
