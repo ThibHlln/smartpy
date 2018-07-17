@@ -5,9 +5,24 @@
 
 # SMARTpy - An open-source version of the rainfall-runoff model SMART in Python
 
-SMARTpy is an open-source hydrological catchment model in Python. It is licensed under GNU GPL-3.0 (see license file provided). SMART (Soil Moisture Accounting and Routing for Transport) is a top-down rainfall-runoff model composed of a soil moisture accounting component and linear routing components. It requires rainfall and potential evapotranspiration time series as inputs, it features a set of ten parameters, and it yields a discharge time series.
+SMARTpy is an open-source hydrological catchment model in Python. It is licensed under GNU GPL-3.0 (see [licence file](LICENCE.md) provided). SMART (Soil Moisture Accounting and Routing for Transport) is a top-down rainfall-runoff model composed of a soil moisture accounting component and linear routing components. It requires rainfall and potential evapotranspiration time series as inputs, it features a set of ten parameters, and it yields a discharge time series.
 
 Mockler, E., O’Loughlin, F., and Bruen, M.: Understanding hydrological flow paths in conceptual catchment models using uncertainty and sensitivity analysis, *Computers & Geosciences*, 90, 66–77,[doi:10.1016/j.cageo.2015.08.015](https://dx.doi.org/10.1016/j.cageo.2015.08.015), 2016
+
+## How to Install
+
+SMARTpy is available on PyPI, so you can simply use pip:
+
+    python -m pip install smartpy
+
+Alternatively, you can download the source code (*i.e.* this repository) and use the command:
+
+    python setup.py install
+
+## Dependencies
+
+SMARTpy requires the popular Python package `numpy` and `scipy` to be installed on the Python implementation where `smartpy` is installed. For Python 2 and 3 compatibilities, the package `future` is also required.
+Additional optional dependencies include `netCDF4` if one wishes to use NetCDF files as input, and `smartcpp` if one wishes to use an accelerator module for the `SMART` model (it gives access to a [C++ extension for the SMART model](https://github.com/ThibHlln/smartcpp)).
 
 ## Model Specifications
 
