@@ -36,7 +36,7 @@ class Parameters(object):
             'SK': (1.0, 240.0),
             'FK': (48.0, 1440.0),
             'GK': (1200.0, 4800.0),
-            'RK': (1.0, 96.0),
+            'RK': (1.0, 96.0)
         }
         self.values = dict()
 
