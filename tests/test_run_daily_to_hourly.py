@@ -118,7 +118,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
 
     def test_compare_discharge_series(self):
         # get the parameter values
-        self.sm.parameters.get_parameters_from_file(
+        self.sm.parameters.set_parameters_with_file(
             ''.join([self.sm.in_f, self.sm.catchment, '.parameters']))
 
         # run the SMART model

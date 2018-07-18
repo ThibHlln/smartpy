@@ -40,7 +40,7 @@ class Parameters(object):
         }
         self.values = dict()
 
-    def get_parameters_from_file(self, file_location):
+    def set_parameters_with_file(self, file_location):
         my_dict_par = dict()
         try:
             with open_csv_rb(file_location) as my_file:
@@ -62,7 +62,7 @@ class Parameters(object):
                 raise Exception("The parameter {} is not available in the "
                                 "parameters file at {}.".format(param, file_location))
 
-    def get_parameters_from_dict(self, dictionary):
+    def set_parameters_with_dict(self, dictionary):
         for param in self.names:
             try:
                 self.values[param] = dictionary[param]
