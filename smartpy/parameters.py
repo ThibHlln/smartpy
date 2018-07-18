@@ -62,3 +62,9 @@ class Parameters(object):
                 raise Exception("The parameter {} is not available in the "
                                 "parameters file at {}.".format(param, file_location))
 
+    def get_parameters_from_dict(self, dictionary):
+        for param in self.names:
+            try:
+                self.values[param] = dictionary[param]
+            except KeyError:
+                raise Exception("The parameter {} is not available in the dictionary provided.")
