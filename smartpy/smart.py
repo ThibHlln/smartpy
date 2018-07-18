@@ -30,11 +30,12 @@ from .structure import run
 
 
 class SMART(object):
-    def __init__(self, catchment, c_area_m2, g_area_m2, start, end,
-                 time_delta_simu, time_delta_save, warm_up_days, in_format, root):
+    def __init__(self, catchment, catchment_area_m2, start, end,
+                 time_delta_simu, time_delta_save, warm_up_days, in_format, root,
+                 gauged_area_m2=None):
         # general information
         self.catchment = catchment
-        self.area = c_area_m2
+        self.area = catchment_area_m2
         # directory information
         self.root_f = root
         self.in_f = sep.join([self.root_f, 'in', self.catchment, sep])
@@ -56,10 +57,13 @@ class SMART(object):
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), in_format,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
-        self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
-                                              self.timeframe.get_series_save()[1],
-                                              self.timeframe.get_series_save()[-1],
-                                              c_area_m2, g_area_m2)
+        if gauged_area_m2:
+            self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
+                                                  self.timeframe.get_series_save()[1],
+                                                  self.timeframe.get_series_save()[-1],
+                                                  catchment_area_m2, gauged_area_m2)
+        else:
+            self.flow = None
         # optional extra information for setting up initial levels in reservoirs
         self.extra = None
         # parameters
@@ -83,10 +87,10 @@ class SMART(object):
             write_flow_file_from_dict(self.timeframe, self.discharge,
                                       ''.join([self.out_f, self.catchment, '.mod.flow']),
                                       method='raw')
-
-            write_flow_file_from_dict(self.timeframe, self.flow,
-                                      ''.join([self.out_f, self.catchment, '.obs.flow']),
-                                      method='raw')
+            if self.flow:
+                write_flow_file_from_dict(self.timeframe, self.flow,
+                                          ''.join([self.out_f, self.catchment, '.obs.flow']),
+                                          method='raw')
         else:
             raise Exception("The output files cannot be written because the outputs attribute is unassigned."
                             "Please make sure to call the simulate method before writing the output files.")

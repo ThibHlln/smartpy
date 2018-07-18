@@ -40,7 +40,7 @@ class MonteCarlo(object):
         c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
             get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
-        self.model = SMART(catchment, c_area, g_area, start, end, delta_simu, delta_report, warm_up, in_format, root_f)
+        self.model = SMART(catchment, c_area, start, end, delta_simu, delta_report, warm_up, in_format, root_f, g_area)
 
         self.save_sim = save_sim
 

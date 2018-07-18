@@ -9,15 +9,15 @@ class TestRunDaily2Hourly(unittest.TestCase):
     def setUp(self):
         self.sm = smartpy.SMART(
             catchment='ExampleDaily',
-            c_area_m2=175.46 * 1E6,
-            g_area_m2=175.97 * 1E6,
+            catchment_area_m2=175.46 * 1E6,
             start=datetime.strptime('01/01/2007 09:00:00', '%d/%m/%Y %H:%M:%S'),
             end=datetime.strptime('31/12/2016 09:00:00', '%d/%m/%Y %H:%M:%S'),
             time_delta_simu=timedelta(hours=1),
             time_delta_save=timedelta(days=1),
             warm_up_days=365,
             in_format='csv',
-            root="examples/"
+            root="examples/",
+            gauged_area_m2=175.97 * 1E6
         )
 
         self.sm.extra = {'aar': 1200, 'r-o_ratio': 0.45, 'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)}
