@@ -170,7 +170,7 @@ def read_rain_file(file_location, file_format):
         if Dataset:
             return read_netcdf_time_series_with_delta_check(file_location, key_variable='DateTime', val_variable='rain')
         else:
-            raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
+            raise Exception("The use of 'netcdf' as the input file format requires the package 'netCDF4', "
                             "please install it and retry, or choose another file format.")
     else:
         return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='rain')
@@ -181,7 +181,7 @@ def read_peva_file(file_location, file_format):
         if Dataset:
             return read_netcdf_time_series_with_delta_check(file_location, key_variable='DateTime', val_variable='peva')
         else:
-            raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
+            raise Exception("The use of 'netcdf' as the input file format requires the package 'netCDF4', "
                             "please install it and retry, or choose another file format.")
     else:
         return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='peva')
