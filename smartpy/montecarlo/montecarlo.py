@@ -21,7 +21,9 @@
 from builtins import map
 from csv import DictReader
 import numpy as np
-from os import sep
+from os import sep, remove
+import gzip
+import shutil
 
 try:
     import spotpy
@@ -34,7 +36,7 @@ except ImportError:
     Dataset = None
 
 from ..smart import SMART
-from ..inout import get_dict_simulation_settings, open_csv_wb
+from ..inout import get_dict_simulation_settings, open_csv_rb, open_csv_wb
 from ..objfunctions import \
     groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
 
@@ -124,10 +126,22 @@ class MonteCarlo(object):
     def parameters(self):
         return spotpy.parameter.generate(self.params)
 
-    def run(self):
-        self._init_db()
+    def run(self, compression=None):
+        # if compression specified, NetCDF4 needs to know compression level (between 1 and 9) when creating the file
+        if self.out_format == 'netcdf' and compression is not True and isinstance(compression, (int, long, float)):
+            self._init_db(compression=compression)
+        else:
+            self._init_db()
+        # run the Monte Carlo simulation
         sampler = spotpy.algorithms.mc(self, parallel=self.parallel)
         sampler.sample(len(self.p_map))
+        # if compression specified, the CSV file created will be compressed
+        if self.out_format == 'csv' and compression is True:
+            self.database.close()
+            with open_csv_rb(self.db_file) as f_in:
+                with gzip.open(self.db_file + '.gz', 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            remove(self.db_file)
 
     def simulation(self, vector):
         simulations, constraint = self.model.simulate({
@@ -207,7 +221,7 @@ class MonteCarlo(object):
                                 "please install it and retry, or choose another file format.")
         else:
             # collect parameter values and objective function values from CSV
-            with open(file_location) as my_file:
+            with open_csv_rb(file_location) as my_file:
                 my_reader = DictReader(my_file)
                 obj_fns, params = list(), list()
                 for row in my_reader:
