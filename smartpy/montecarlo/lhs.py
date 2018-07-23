@@ -33,9 +33,9 @@ from .montecarlo import MonteCarlo
 class LHS(MonteCarlo):
     def __init__(self, catchment, root_f, in_format, out_format,
                  sample_size,
-                 parallel='seq', save_sim=False):
+                 parallel='seq', save_sim=False, settings_filename=None):
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
-                            parallel=parallel, save_sim=save_sim, func='lhs')
+                            parallel=parallel, save_sim=save_sim, func='lhs', settings_filename=settings_filename)
 
         # generate a sample of parameter sets from the using Latin Hypercube Sampling
         self.lhs_params = self._get_params_from_lh(sample_size)

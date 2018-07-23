@@ -28,9 +28,9 @@ from .montecarlo import MonteCarlo
 
 class Total(MonteCarlo):
     def __init__(self, catchment, root_f, in_format, out_format,
-                 parallel='seq', save_sim=False):
+                 parallel='seq', save_sim=False, settings_filename=None):
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
-                            parallel=parallel, save_sim=save_sim, func='total')
+                            parallel=parallel, save_sim=save_sim, func='total', settings_filename=settings_filename)
 
         # collect the sampling sets from the Monte Carlo simulation (LHS sampling)
         self.sampling_run_file = \

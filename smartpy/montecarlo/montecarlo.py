@@ -43,12 +43,16 @@ from ..objfunctions import \
 
 class MonteCarlo(object):
     def __init__(self, catchment, root_f, in_format, out_format,
-                 parallel, save_sim, func):
+                 parallel, save_sim, func, settings_filename):
         in_f = sep.join([root_f, 'in', catchment, sep])
 
         # collect the simulation information from the .sttngs file
-        c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
-            get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
+        if settings_filename:
+            c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
+                get_dict_simulation_settings(''.join([in_f, settings_filename]))
+        else:
+            c_area, g_area, start, end, delta_simu, delta_report, warm_up, gw_constraint = \
+                get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
         # generate an instance of the SMART model class
         self.model = SMART(catchment, c_area, start, end, delta_simu, delta_report, warm_up, in_format, root_f, g_area)
