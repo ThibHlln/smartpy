@@ -18,9 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from csv import DictReader
 import numpy as np
-from builtins import zip
+from builtins import zip, range
 
 try:
     import spotpy
@@ -31,15 +30,21 @@ from .montecarlo import MonteCarlo
 
 
 class GLUE(MonteCarlo):
-    def __init__(self, catchment, root_f, in_format, conditioning, save_sim=False):
-        MonteCarlo.__init__(self, catchment, root_f, in_format, save_sim=save_sim, func='glue')
+    def __init__(self, catchment, root_f, in_format, out_format,
+                 conditioning,
+                 parallel='seq', save_sim=False):
+        MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
+                            parallel=parallel, save_sim=save_sim, func='glue')
 
-        # extract behavioural sets from sampling sets
-        self.sampling_run_file = ''.join([self.model.out_f, catchment, '.SMART.lhs'])
-        self.sampled_params, self.sampled_obj_fns = self.get_sampled_sets_from_file(self.sampling_run_file,
-                                                                                    self.param_names,
-                                                                                    self.obj_fn_names)
-        try:
+        # collect the sampling sets from the Monte Carlo simulation (LHS sampling)
+        self.sampling_run_file = \
+            ''.join([self.model.out_f, catchment, '.SMART.lhs.nc']) if self.out_format == 'netcdf' else \
+            ''.join([self.model.out_f, catchment, '.SMART.lhs'])
+        self.sampled_params, self.sampled_obj_fns = self._get_sampled_sets_from_file(self.sampling_run_file,
+                                                                                     self.param_names,
+                                                                                     self.obj_fn_names)
+        # generate lists for possible condition(s) to distinguish behavioural and non-behavioural sets
+        try:  # get the index for each condition
             self.objective_fn_indices = [self.obj_fn_names.index(fn) for fn in conditioning]
         except ValueError:
             raise Exception("One of the names of objective functions for conditioning in GLUE is not recognised."
@@ -47,10 +52,15 @@ class GLUE(MonteCarlo):
         self.conditions_types = [conditioning[fn][0] for fn in conditioning]
         self.conditions_values = [conditioning[fn][1] for fn in conditioning]
 
-        self.behavioural_params = self.get_behavioural_sets(self.sampled_params,
-                                                            self.sampled_obj_fns[:, self.objective_fn_indices],
-                                                            self.conditions_values,
-                                                            self.conditions_types)
+        # extract behavioural sets from sampling sets
+        self.behavioural_params = self._get_behavioural_sets(self.sampled_params,
+                                                             self.sampled_obj_fns[:, self.objective_fn_indices],
+                                                             self.conditions_values,
+                                                             self.conditions_types)
+
+        # create a map of parameter sets to give access to a unique index for each set
+        self.p_map = {tuple(self.behavioural_params[r, :].tolist()): r for r in range(self.behavioural_params.shape[0])}
+
         # give list of behavioural parameters
         self.params = [
             spotpy.parameter.List(self.param_names[0], self.behavioural_params[:, 0]),
@@ -65,31 +75,24 @@ class GLUE(MonteCarlo):
             spotpy.parameter.List(self.param_names[9], self.behavioural_params[:, 9])
         ]
 
-    def parameters(self):
-        # returns an ndarray containing a tuple for each parameter (random value, step, optguess, minbound, maxbound)
-        # parameter.generate() loops through each Object in self.params
-        # and uses its astuple() method (inherited from the Base class)
-        # that itself uses its __call__() (also inherited from the Base class)
-        return spotpy.parameter.generate(self.params)
-
-    def run(self, parallel):
-        sampler = spotpy.algorithms.mc(self, parallel=parallel)
-        sampler.sample(self.behavioural_params.shape[0])
-
     @staticmethod
-    def get_sampled_sets_from_file(file_location, param_names, obj_fn_names):
-        with open(file_location) as my_file:
-            my_reader = DictReader(my_file)
-            obj_fns, params = list(), list()
-            for row in my_reader:
-                obj_fns.append([row[obj_fn] for obj_fn in obj_fn_names])
-                params.append([row[param] for param in param_names])
+    def _get_behavioural_sets(params, obj_fns, conditions_val, conditions_typ):
+        """
+        Based on the Generalized Likelihood Uncertainty Estimation (GLUE) methodology
+        to identify behavioural models from Monte Carlo simulations
 
-        return np.array(params, dtype=np.float64), np.array(obj_fns, dtype=np.float64)
+        See:
+        Beven, K., Binley, A. (1992) The future of distributed models: Model calibration and uncertainty prediction.
+        Hydrological Processes, 6, 279–298. https://doi.org/10.1002/HYP.3360060305
 
-    @staticmethod
-    def get_behavioural_sets(params, obj_fns, conditions_val, conditions_typ):
+        Beven, K., Freer, J., 2001. Equifinality, data assimilation, and uncertainty estimation in mechanistic
+        modelling of complex environmental systems using the GLUE methodology. Journal of Hydrology, 249, 11–29.
+        https://doi.org/10.1016/S0022-1694(01)00421-8
 
+        Beven, K., Binley, A., (2014) GLUE: 20 years on. Hydrological Processes, 28, 5897–5918.
+        https://doi.org/10.1002/hyp.10082
+        """
+        # a few checks to make sure arguments given have compatible dimensions
         if obj_fns.ndim != 2:
             raise Exception('The matrix containing the objective functions is not 2D.')
         if params.ndim != 2:
@@ -100,6 +103,7 @@ class GLUE(MonteCarlo):
             raise Exception('The objective function matrix and the conditions matrices '
                             'do not have compatible dimensions.')
 
+        # generate a mask for the condition(s)
         behavioural = np.ones((obj_fns.shape[0],), dtype=bool)
         for obj_fn, values, kind in zip(obj_fns.T, conditions_val, conditions_typ):
             if kind == 'equal':
@@ -138,4 +142,5 @@ class GLUE(MonteCarlo):
 
             behavioural *= selection
 
+        # apply the mask to the original parameters array and return the resulting array (possibly empty)
         return params[behavioural, :]

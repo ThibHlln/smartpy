@@ -18,9 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from csv import DictReader
 import numpy as np
-from builtins import zip
+from builtins import zip, range
 
 try:
     import spotpy
@@ -31,21 +30,28 @@ from .montecarlo import MonteCarlo
 
 
 class Best(MonteCarlo):
-    def __init__(self, catchment, target, nb_best, constraining, root_f, in_format, save_sim=False):
-        MonteCarlo.__init__(self, catchment, root_f, in_format, save_sim=save_sim, func='{}best'.format(nb_best))
+    def __init__(self, catchment, root_f, in_format, out_format,
+                 target, nb_best, constraining,
+                 parallel='seq', save_sim=False):
+        MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
+                            parallel=parallel, save_sim=save_sim, func='{}best'.format(nb_best))
 
-        # extract behavioural sets from sampling sets
-        self.sampling_run_file = ''.join([self.model.out_f, catchment, '.SMART.lhs'])
-        self.sampled_params, self.sampled_obj_fns = self.get_sampled_sets_from_file(self.sampling_run_file,
-                                                                                    self.param_names,
-                                                                                    self.obj_fn_names)
-
+        # collect the sampling sets from the Monte Carlo simulation (LHS sampling)
+        self.sampling_run_file = \
+            ''.join([self.model.out_f, catchment, '.SMART.lhs.nc']) if self.out_format == 'netcdf' else \
+            ''.join([self.model.out_f, catchment, '.SMART.lhs'])
+        self.sampled_params, self.sampled_obj_fns = self._get_sampled_sets_from_file(self.sampling_run_file,
+                                                                                     self.param_names,
+                                                                                     self.obj_fn_names)
+        # get the index of the targeted objective functions
         try:
             self.target_fn_index = self.obj_fn_names.index(target)
         except ValueError:
             raise Exception("The objective function {} for conditioning in Best is not recognised."
                             "Please check for typos and case sensitive issues.".format(target))
-        try:
+
+        # generate lists for possible constraint(s) before selecting the best parameter sets
+        try:  # get the indices of the possible constraint(s)
             self.constraints_indices = [self.obj_fn_names.index(fn) for fn in constraining]
         except ValueError:
             raise Exception("One of the names of constraints in Best is not recognised."
@@ -53,9 +59,14 @@ class Best(MonteCarlo):
         self.constraints_types = [constraining[fn][0] for fn in constraining]
         self.constraints_values = [constraining[fn][1] for fn in constraining]
 
-        self.best_params = self.get_best_sets(self.sampled_params, self.sampled_obj_fns[:, [13]],
-                                              self.constraints_values, self.constraints_types,
-                                              self.sampled_obj_fns[:, [0]], nb_best)
+        # extract the best parameter sets given the target and the possible constraint(s)
+        self.best_params = self._get_best_sets(self.sampled_params, self.sampled_obj_fns[:, [13]],
+                                               self.constraints_values, self.constraints_types,
+                                               self.sampled_obj_fns[:, [0]], nb_best)
+
+        # create a map of parameter sets to give access to a unique index for each set
+        self.p_map = {tuple(self.best_params[r, :].tolist()): r for r in range(self.best_params.shape[0])}
+
         # give list of behavioural parameters
         self.params = [
             spotpy.parameter.List(self.param_names[0], self.best_params[:, 0]),
@@ -70,31 +81,9 @@ class Best(MonteCarlo):
             spotpy.parameter.List(self.param_names[9], self.best_params[:, 9])
         ]
 
-    def parameters(self):
-        # returns an ndarray containing a tuple for each parameter (random value, step, optguess, minbound, maxbound)
-        # parameter.generate() loops through each Object in self.params
-        # and uses its astuple() method (inherited from the Base class)
-        # that itself uses its __call__() (also inherited from the Base class)
-        return spotpy.parameter.generate(self.params)
-
-    def run(self, parallel):
-        sampler = spotpy.algorithms.mc(self, parallel=parallel)
-        sampler.sample(self.best_params.shape[0])
-
     @staticmethod
-    def get_sampled_sets_from_file(file_location, param_names, obj_fn_names):
-        with open(file_location) as my_file:
-            my_reader = DictReader(my_file)
-            obj_fns, params = list(), list()
-            for row in my_reader:
-                obj_fns.append([row[obj_fn] for obj_fn in obj_fn_names])
-                params.append([row[param] for param in param_names])
-
-        return np.array(params, dtype=np.float64), np.array(obj_fns, dtype=np.float64)
-
-    @staticmethod
-    def get_best_sets(params, constraints_fns, constraints_val, constraints_typ, sort_fn, nb_best):
-
+    def _get_best_sets(params, constraints_fns, constraints_val, constraints_typ, sort_fn, nb_best):
+        # a few checks to make sure arguments given have compatible dimensions
         if constraints_fns.ndim != 2:
             raise Exception('The matrix containing the constraint functions is not 2D.')
         if params.ndim != 2:
@@ -111,6 +100,7 @@ class Best(MonteCarlo):
         if nb_best > params.shape[0]:
             raise Exception('The number of best models requested is higher than the sample size.')
 
+        # generate a mask for the possible constraint(s)
         constrained = np.ones((constraints_fns.shape[0],), dtype=bool)
         for obj_fn, values, kind in zip(constraints_fns.T, constraints_val, constraints_typ):
             if kind == 'equal':
@@ -149,10 +139,13 @@ class Best(MonteCarlo):
 
             constrained *= selection
 
+        # apply the constraint(s) mask to
         sort_fn_constrained = sort_fn[constrained, :]
         param_constrained = params[constrained, :]
 
+        # check that there is enough parameter sets remaining after constraint to meet the sample size
         if nb_best > param_constrained.shape[0]:
             raise Exception('The number of best models requested is higher than the restrained sample size.')
 
+        # return the best parameter sets on the given targeted objective functions
         return param_constrained[sort_fn_constrained[:, 0].argsort()][-nb_best:]
