@@ -28,7 +28,7 @@ from .montecarlo import MonteCarlo
 
 class Total(MonteCarlo):
     def __init__(self, catchment, root_f, in_format, out_format,
-                 parallel='seq', save_sim=False, settings_filename=None):
+                 parallel='seq', save_sim=False, settings_filename=None, decompression_csv=False):
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
                             parallel=parallel, save_sim=save_sim, func='total', settings_filename=settings_filename)
 
@@ -38,7 +38,8 @@ class Total(MonteCarlo):
             ''.join([self.model.out_f, catchment, '.SMART.lhs'])
         self.sampled_params, self.sampled_obj_fns = self._get_sampled_sets_from_file(self.sampling_run_file,
                                                                                      self.param_names,
-                                                                                     self.obj_fn_names)
+                                                                                     self.obj_fn_names,
+                                                                                     decompression_csv)
         # create a map of parameter sets to give access to a unique index for each set
         self.p_map = {tuple(self.sampled_params[r, :].tolist()): r for r in range(self.sampled_params.shape[0])}
 

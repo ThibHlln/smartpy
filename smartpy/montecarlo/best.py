@@ -31,8 +31,8 @@ from .montecarlo import MonteCarlo
 
 class Best(MonteCarlo):
     def __init__(self, catchment, root_f, in_format, out_format,
-                 target, nb_best, constraining,
-                 parallel='seq', save_sim=False, settings_filename=None):
+                 target, nb_best, constraining=None,
+                 parallel='seq', save_sim=False, settings_filename=None, decompression_csv=False):
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
                             parallel=parallel, save_sim=save_sim, func='{}best'.format(nb_best),
                             settings_filename=settings_filename)
@@ -43,27 +43,31 @@ class Best(MonteCarlo):
             ''.join([self.model.out_f, catchment, '.SMART.lhs'])
         self.sampled_params, self.sampled_obj_fns = self._get_sampled_sets_from_file(self.sampling_run_file,
                                                                                      self.param_names,
-                                                                                     self.obj_fn_names)
+                                                                                     self.obj_fn_names,
+                                                                                     decompression_csv)
         # get the index of the targeted objective functions
         try:
-            self.target_fn_index = self.obj_fn_names.index(target)
+            self.target_fn_index = [self.obj_fn_names.index(target)]
         except ValueError:
             raise Exception("The objective function {} for conditioning in Best is not recognised."
                             "Please check for typos and case sensitive issues.".format(target))
 
         # generate lists for possible constraint(s) before selecting the best parameter sets
-        try:  # get the indices of the possible constraint(s)
-            self.constraints_indices = [self.obj_fn_names.index(fn) for fn in constraining]
-        except ValueError:
-            raise Exception("One of the names of constraints in Best is not recognised."
-                            "Please check for typos and case sensitive issues.")
-        self.constraints_types = [constraining[fn][0] for fn in constraining]
-        self.constraints_values = [constraining[fn][1] for fn in constraining]
+        if constraining:
+            try:  # get the indices of the possible constraint(s)
+                self.constraints_indices = [self.obj_fn_names.index(fn) for fn in constraining]
+            except ValueError:
+                raise Exception("One of the names of constraints in Best is not recognised."
+                                "Please check for typos and case sensitive issues.")
+            self.constraints_types = [constraining[fn][0] for fn in constraining]
+            self.constraints_values = [constraining[fn][1] for fn in constraining]
+        else:
+            self.constraints_indices, self.constraints_types, self.constraints_values = [], [], []
 
         # extract the best parameter sets given the target and the possible constraint(s)
-        self.best_params = self._get_best_sets(self.sampled_params, self.sampled_obj_fns[:, [13]],
+        self.best_params = self._get_best_sets(self.sampled_params, self.sampled_obj_fns[:, self.constraints_indices],
                                                self.constraints_values, self.constraints_types,
-                                               self.sampled_obj_fns[:, [0]], nb_best)
+                                               self.sampled_obj_fns[:, self.target_fn_index], nb_best)
 
         # create a map of parameter sets to give access to a unique index for each set
         self.p_map = {tuple(self.best_params[r, :].tolist()): r for r in range(self.best_params.shape[0])}

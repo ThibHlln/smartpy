@@ -141,12 +141,13 @@ class MonteCarlo(object):
         sampler = spotpy.algorithms.mc(self, parallel=self.parallel)
         sampler.sample(len(self.p_map))
         # if compression specified, the CSV file created will be compressed
-        if self.out_format == 'csv' and compression is True:
+        if self.out_format == 'csv':
             self.database.close()
-            with open_csv_rb(self.db_file) as f_in:
-                with gzip.open(self.db_file + '.gz', 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-            remove(self.db_file)
+            if compression is True:
+                with open_csv_rb(self.db_file) as f_in:
+                    with gzip.open(self.db_file + '.gz', 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                remove(self.db_file)
 
     def simulation(self, vector):
         simulations, constraint = self.model.simulate({
@@ -212,7 +213,7 @@ class MonteCarlo(object):
                 # write data in file
             self.database.write(','.join(map(lambda x: '%.6e' % x, line)) + '\n')
 
-    def _get_sampled_sets_from_file(self, file_location, param_names, obj_fn_names):
+    def _get_sampled_sets_from_file(self, file_location, param_names, obj_fn_names, decompression_csv):
         obj_fns, params = list(), list()
         if self.out_format == 'netcdf':
             # collect parameter values and objective function values from netCDF
@@ -225,12 +226,20 @@ class MonteCarlo(object):
                 raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
                                 "please install it and retry, or choose another file format.")
         else:
+            if decompression_csv:
+                with gzip.open(file_location + '.gz', 'rb') as my_file:
+                    my_reader = DictReader(my_file)
+                    obj_fns, params = list(), list()
+                    for row in my_reader:
+                        obj_fns.append([row[obj_fn] for obj_fn in obj_fn_names])
+                        params.append([row[param] for param in param_names])
             # collect parameter values and objective function values from CSV
-            with open_csv_rb(file_location) as my_file:
-                my_reader = DictReader(my_file)
-                obj_fns, params = list(), list()
-                for row in my_reader:
-                    obj_fns.append([row[obj_fn] for obj_fn in obj_fn_names])
-                    params.append([row[param] for param in param_names])
+            else:
+                with open_csv_rb(file_location) as my_file:
+                    my_reader = DictReader(my_file)
+                    obj_fns, params = list(), list()
+                    for row in my_reader:
+                        obj_fns.append([row[obj_fn] for obj_fn in obj_fn_names])
+                        params.append([row[param] for param in param_names])
         # return parameter values and objective function values in two separate arrays
         return np.array(params, dtype=np.float32), np.array(obj_fns, dtype=np.float32)

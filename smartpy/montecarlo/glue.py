@@ -32,7 +32,7 @@ from .montecarlo import MonteCarlo
 class GLUE(MonteCarlo):
     def __init__(self, catchment, root_f, in_format, out_format,
                  conditioning,
-                 parallel='seq', save_sim=False, settings_filename=None):
+                 parallel='seq', save_sim=False, settings_filename=None, decompression_csv=False):
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
                             parallel=parallel, save_sim=save_sim, func='glue', settings_filename=settings_filename)
 
@@ -42,7 +42,8 @@ class GLUE(MonteCarlo):
             ''.join([self.model.out_f, catchment, '.SMART.lhs'])
         self.sampled_params, self.sampled_obj_fns = self._get_sampled_sets_from_file(self.sampling_run_file,
                                                                                      self.param_names,
-                                                                                     self.obj_fn_names)
+                                                                                     self.obj_fn_names,
+                                                                                     decompression_csv)
         # generate lists for possible condition(s) to distinguish behavioural and non-behavioural sets
         try:  # get the index for each condition
             self.objective_fn_indices = [self.obj_fn_names.index(fn) for fn in conditioning]
