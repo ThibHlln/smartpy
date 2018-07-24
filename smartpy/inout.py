@@ -26,7 +26,6 @@ from collections import OrderedDict
 import sys
 import io
 import argparse
-import imp
 try:
     from netCDF4 import Dataset
 except ImportError:
@@ -348,16 +347,11 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='save_gap',
 
 def valid_file_format(fmt):
     if fmt.lower() == "netcdf":
-        try:
-            imp.find_module('netCDF4')
+        if Dataset:  # i.e. netCDF4 import was successful
             return "netcdf"
-        except ImportError:
+        else:
             raise argparse.ArgumentTypeError("NetCDF4 module is not installed, please choose another file format.")
     elif fmt.lower() == "csv":
-        try:
-            imp.find_module('csv')
-            return "csv"
-        except ImportError:
-            raise argparse.ArgumentTypeError("CSV module is not installed, please choose another file format.")
+        return "csv"
     else:
         raise argparse.ArgumentTypeError("File format not recognised: '{0}'.".format(fmt))
