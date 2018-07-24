@@ -134,7 +134,7 @@ class MonteCarlo(object):
     def run(self, compression=None):
         # if compression specified, NetCDF4 needs to know compression level (between 1 and 9) when creating the file
         if self.out_format == 'netcdf' and not isinstance(compression, bool) \
-                and isinstance(compression, (int, long, float)):
+                and isinstance(compression, (int, float)):
             self._init_db(compression=compression)
         else:
             self._init_db()
