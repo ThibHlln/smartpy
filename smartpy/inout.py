@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from builtins import range, dict
+from builtins import range, dict, zip
 from csv import DictReader, writer
 from datetime import datetime, timedelta
 import numpy as np
@@ -82,8 +82,8 @@ def get_dict_peva_series_simu(file_location, file_format, start_simu, end_simu, 
         raise Exception('PEva data not sufficient for simulation.')
 
 
-def get_dict_discharge_series(file_location, start_report, end_report, catchment_area, gauged_area):
-    data_flow = read_flow_file(file_location)
+def get_dict_discharge_series(file_location, file_format, start_report, end_report, catchment_area, gauged_area):
+    data_flow = read_flow_file(file_location, file_format)
 
     scaling_factor = catchment_area / gauged_area
 
@@ -186,8 +186,16 @@ def read_peva_file(file_location, file_format):
         return read_csv_time_series_with_delta_check(file_location, key_header='DateTime', val_header='peva')
 
 
-def read_flow_file(file_location):
-    return read_csv_time_series_with_missing_check(file_location, key_header='DateTime', val_header='flow')
+def read_flow_file(file_location, file_format):
+    if file_format == 'netcdf':
+        if Dataset:
+            return read_netcdf_time_series_with_missing_check(file_location,
+                                                              key_variable='DateTime', val_variable='flow')
+        else:
+            raise Exception("The use of 'netcdf' as the input file format requires the package 'netCDF4', "
+                            "please install it and retry, or choose another file format.")
+    else:
+        return read_csv_time_series_with_missing_check(file_location, key_header='DateTime', val_header='flow')
 
 
 def read_simulation_settings_file(file_location):
@@ -266,6 +274,26 @@ def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
         return my_dict_data
     except IOError:
         raise Exception('File {} could not be found.'.format(csv_file))
+
+
+def read_netcdf_time_series_with_missing_check(netcdf_file, key_variable, val_variable):
+    try:
+        with Dataset(netcdf_file, 'r') as my_file:
+            my_dict_data = OrderedDict()
+            try:
+                my_dts = [datetime.utcfromtimestamp(tstamp) for tstamp in my_file.variables[key_variable][:]]
+                my_flows = my_file.variables[val_variable][:]
+
+                for dt, flow in zip(my_dts, my_flows):
+                    if not np.isnan(flow):  # flag for missing data
+                        my_dict_data[dt] = flow
+
+            except KeyError:
+                raise Exception('Variable {} or {} does not exist in {}.'.format(key_variable, val_variable,
+                                                                                 netcdf_file))
+        return my_dict_data
+    except IOError:
+        raise Exception('File {} could not be found.'.format(netcdf_file))
 
 
 def write_flow_file_from_list(timeframe, discharge, csv_file, report='save_gap', method='summary'):

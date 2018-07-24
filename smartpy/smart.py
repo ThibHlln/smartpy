@@ -61,7 +61,8 @@ class SMART(object):
         self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), self.in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         if gauged_area_m2:
-            self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
+            self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow' + extra_ext]),
+                                                  self.in_fmt,
                                                   self.timeframe.get_series_save()[1],
                                                   self.timeframe.get_series_save()[-1],
                                                   catchment_area_m2, gauged_area_m2)
