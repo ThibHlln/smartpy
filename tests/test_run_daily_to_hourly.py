@@ -16,6 +16,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
             time_delta_save=timedelta(days=1),
             warm_up_days=365,
             in_format='csv',
+            out_format='csv',
             root="examples/",
             gauged_area_m2=175.97 * 1E6
         )
