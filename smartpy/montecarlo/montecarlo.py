@@ -22,6 +22,7 @@ from builtins import map
 from csv import DictReader
 import numpy as np
 from os import sep, remove
+from io import open
 import gzip
 import shutil
 
@@ -144,7 +145,7 @@ class MonteCarlo(object):
         if self.out_format == 'csv':
             self.database.close()
             if compression is True:
-                with open_csv_rb(self.db_file) as f_in:
+                with open(self.db_file, 'rb') as f_in:
                     with gzip.open(self.db_file + '.gz', 'wb') as f_out:
                         shutil.copyfileobj(f_in, f_out)
                 remove(self.db_file)
