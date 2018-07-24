@@ -89,35 +89,35 @@ class MonteCarlo(object):
     def _init_db(self, compression=6):
         if self.out_format == 'netcdf':
             if Dataset:  # check that netCDF4 is installed and imported
+                self.database = Dataset(self.db_file, 'w', parallel=self.p)
                 # create structure of NetCDF file
-                with Dataset(self.db_file, 'w', parallel=self.p) as my_file:
-                    # metadata
-                    my_file.description = "Monte Carlo Simulation outputs with SMARTpy."
-                    # dimensions
-                    my_file.createDimension("NbSamples", len(self.p_map))
-                    my_file.createDimension("NbParameters", len(self.model.parameters.names))
-                    my_file.createDimension("NbObjFunctions", len(self.obj_fn_names))
-                    # variables
-                    params = my_file.createVariable("Parameters", np.float32, ("NbSamples", "NbParameters"),
-                                                    zlib=True, complevel=compression)
-                    params.units = ', '.join(self.model.parameters.names)
-                    objfns = my_file.createVariable("ObjFunctions", np.float32, ("NbSamples", "NbObjFunctions"),
-                                                    zlib=True, complevel=compression)
-                    objfns.units = ', '.join(self.obj_fn_names)
-                    if self.save_sim:
-                        # dimension
-                        my_file.createDimension("DateTime", None)  # Unlimited dimension
-                        # coordinate variables
-                        times = my_file.createVariable("DateTime", np.float64, ("DateTime",), zlib=True)
-                        times.units = 'seconds since 1970-01-01 00:00:00.0'
-                        # variable
-                        simu = my_file.createVariable("Simulations", np.float32, ("NbSamples", "DateTime"),
+                # metadata
+                self.database.description = "Monte Carlo Simulation outputs with SMARTpy."
+                # dimensions
+                self.database.createDimension("NbSamples", len(self.p_map))
+                self.database.createDimension("NbParameters", len(self.model.parameters.names))
+                self.database.createDimension("NbObjFunctions", len(self.obj_fn_names))
+                # variables
+                params = self.database.createVariable("Parameters", np.float32, ("NbSamples", "NbParameters"),
                                                       zlib=True, complevel=compression)
-                        simu.units = 'Discharge in m3/s'
-                        # write simulation datetime series as Unix timestamp series
-                        datetimes = [np.datetime64(dt) for dt in self.model.flow]
-                        timestamps = (datetimes - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
-                        my_file.variables['DateTime'][0:len(datetimes)] = timestamps
+                params.units = ', '.join(self.model.parameters.names)
+                objfns = self.database.createVariable("ObjFunctions", np.float32, ("NbSamples", "NbObjFunctions"),
+                                                      zlib=True, complevel=compression)
+                objfns.units = ', '.join(self.obj_fn_names)
+                if self.save_sim:
+                    # dimension
+                    self.database.createDimension("DateTime", None)  # Unlimited dimension
+                    # coordinate variables
+                    times = self.database.createVariable("DateTime", np.float64, ("DateTime",), zlib=True)
+                    times.units = 'seconds since 1970-01-01 00:00:00.0'
+                    # variable
+                    simu = self.database.createVariable("Simulations", np.float32, ("NbSamples", "DateTime"),
+                                                        zlib=True, complevel=compression)
+                    simu.units = 'Discharge in m3/s'
+                    # write simulation datetime series as Unix timestamp series
+                    datetimes = [np.datetime64(dt) for dt in self.model.flow]
+                    timestamps = (datetimes - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+                    self.database.variables['DateTime'][0:len(datetimes)] = timestamps
             else:
                 raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
                                 "please install it and retry, or choose another file format.")
@@ -141,9 +141,9 @@ class MonteCarlo(object):
         # run the Monte Carlo simulation
         sampler = spotpy.algorithms.mc(self, parallel=self.parallel)
         sampler.sample(len(self.p_map))
+        self.database.close()
         # if compression specified, the CSV file created will be compressed
         if self.out_format == 'csv':
-            self.database.close()
             if compression is True:
                 with open(self.db_file, 'rb') as f_in:
                     with gzip.open(self.db_file + '.gz', 'wb') as f_out:
@@ -194,18 +194,17 @@ class MonteCarlo(object):
     def save(self, obj_fns, parameters, simulations, *args, **kwargs):
         if self.out_format == 'netcdf':
             # it was already checked if netCDF4 was installed and imported, so just proceed
-            with Dataset(self.db_file, 'a', parallel=self.p) as my_file:
-                # convert the parameter values array to a list
-                params = parameters.tolist()
-                # get the index of the particular parameter set to write data in the right spot
-                index = self.p_map[tuple(params)]
-                # write data on parameter values and objective functions
-                my_file.variables['Parameters'][index, 0:len(self.param_names)] = params
-                my_file.variables['ObjFunctions'][index, 0:len(self.obj_fn_names)] = obj_fns
-                if self.save_sim:
-                    # write simulation discharge time series
-                    my_s, my_e = 0, len(my_file.variables['DateTime'])
-                    my_file.variables['Simulations'][index, my_s:my_e] = simulations[0]
+            # convert the parameter values array to a list
+            params = parameters.tolist()
+            # get the index of the particular parameter set to write data in the right spot
+            index = self.p_map[tuple(params)]
+            # write data on parameter values and objective functions
+            self.database.variables['Parameters'][index, 0:len(self.param_names)] = params
+            self.database.variables['ObjFunctions'][index, 0:len(self.obj_fn_names)] = obj_fns
+            if self.save_sim:
+                # write simulation discharge time series
+                my_s, my_e = 0, len(self.database.variables['DateTime'])
+                self.database.variables['Simulations'][index, my_s:my_e] = simulations[0]
         else:
             if self.save_sim:  # create a list of objectives functions + parameters + discharge series
                 line = map(np.float32, obj_fns + parameters.tolist() + simulations[0])
