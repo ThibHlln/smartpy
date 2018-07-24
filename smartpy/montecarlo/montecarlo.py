@@ -56,7 +56,9 @@ class MonteCarlo(object):
                 get_dict_simulation_settings(''.join([in_f, catchment, '.sttngs']))
 
         # generate an instance of the SMART model class
-        self.model = SMART(catchment, c_area, start, end, delta_simu, delta_report, warm_up, in_format, root_f, g_area)
+        self.model = SMART(catchment, c_area, start, end, delta_simu, delta_report, warm_up,
+                           in_format, out_format, root_f,
+                           g_area)
 
         # set the technical aspects of the simulation
         self.parallel = parallel  # using mpi to run on several cores

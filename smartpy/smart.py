@@ -31,12 +31,15 @@ from .structure import run
 
 class SMART(object):
     def __init__(self, catchment, catchment_area_m2, start, end,
-                 time_delta_simu, time_delta_save, warm_up_days, in_format, root,
+                 time_delta_simu, time_delta_save, warm_up_days,
+                 in_format, out_format, root,
                  gauged_area_m2=None):
         # general information
         self.catchment = catchment
         self.area = catchment_area_m2
         # directory information
+        self.in_fmt = in_format
+        self.out_fmt = out_format
         self.root_f = root
         self.in_f = sep.join([self.root_f, 'in', self.catchment, sep])
         self.out_f = sep.join([self.root_f, 'out', self.catchment, sep])
@@ -52,10 +55,10 @@ class SMART(object):
         self.timeseries_report = self.timeframe.get_series_save()
         self.warm_up = warm_up_days
         # physical information
-        extra_ext = '.nc' if in_format == 'netcdf' else ''
-        self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain' + extra_ext]), in_format,
+        extra_ext = '.nc' if self.in_fmt == 'netcdf' else ''
+        self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain' + extra_ext]), self.in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
-        self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), in_format,
+        self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), self.in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         if gauged_area_m2:
             self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow']),
@@ -86,10 +89,12 @@ class SMART(object):
         if self.outputs:
             write_flow_file_from_dict(self.timeframe, self.discharge,
                                       ''.join([self.out_f, self.catchment, '.mod.flow']),
+                                      out_file_format=self.out_fmt,
                                       method='raw')
             if self.flow:
                 write_flow_file_from_dict(self.timeframe, self.flow,
                                           ''.join([self.out_f, self.catchment, '.obs.flow']),
+                                          out_file_format=self.out_fmt,
                                           method='raw')
         else:
             raise Exception("The output files cannot be written because the outputs attribute is unassigned."

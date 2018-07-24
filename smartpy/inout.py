@@ -21,7 +21,7 @@
 from builtins import range, dict
 from csv import DictReader, writer
 from datetime import datetime, timedelta
-from numpy import float64
+import numpy as np
 from collections import OrderedDict
 import sys
 import io
@@ -213,7 +213,7 @@ def read_csv_time_series_with_delta_check(csv_file, key_header, val_header):
             my_reader = DictReader(my_file)
             try:
                 for row in my_reader:
-                    my_dict_data[datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S")] = float64(row[val_header])
+                    my_dict_data[datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S")] = np.float64(row[val_header])
                     my_list_dt.append(datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S"))
             except KeyError:
                 raise Exception('Field {} or {} does not exist in {}.'.format(key_header, val_header, csv_file))
@@ -255,9 +255,9 @@ def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
                 for row in my_reader:
                     try:
                         if row[val_header] != '':  # not an empty string (that would mean missing data)
-                            if float64(row[val_header]) != -99.0:  # flag for missing data
+                            if np.float64(row[val_header]) != -99.0:  # flag for missing data
                                 my_dict_data[datetime.strptime(row[key_header], "%Y-%m-%d %H:%M:%S")] = \
-                                    float64(row[val_header])
+                                    np.float64(row[val_header])
                     except ValueError:
                         raise Exception('Field {} in {} cannot be converted to float '
                                         'at {}.'.format(val_header, csv_file, row[key_header]))
@@ -309,7 +309,21 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='save_gap',
         raise Exception("Unknown method for updating simulations files.")
 
 
-def write_flow_file_from_dict(timeframe, discharge, csv_file, report='save_gap', method='summary'):
+def write_flow_file_from_dict(timeframe, discharge, the_file, out_file_format, report='save_gap', method='summary'):
+    if out_file_format == 'netcdf':
+        if Dataset:
+            write_flow_netcdf_file_from_dict(timeframe, discharge, the_file, report=report, method=method)
+        else:
+            raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
+                            "please install it and retry, or choose another file format.")
+    elif out_file_format == 'csv':
+        write_flow_csv_file_from_dict(timeframe, discharge, the_file, report=report, method=method)
+    else:
+        raise Exception("The output format type \'{}\' cannot be written by SMARTpy, "
+                        "choose from: \'csv\', \'netcdf\'.".format(out_file_format))
+
+
+def write_flow_csv_file_from_dict(timeframe, discharge, csv_file, report, method):
     # Select the relevant list of DateTime given the argument used during function call
     if report == 'save_gap':  # standard situation
         my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
@@ -340,9 +354,52 @@ def write_flow_file_from_dict(timeframe, discharge, csv_file, report='save_gap',
                 try:
                     my_writer.writerow([step, '%e' % discharge[step]])
                 except KeyError:
-                    my_writer.writerow([step, ''])
+                    my_writer.writerow([step, 'nan'])
     else:
         raise Exception("Unknown method for updating simulations files.")
+
+
+def write_flow_netcdf_file_from_dict(timeframe, discharge, netcdf_file, report, method):
+    # Select the relevant list of DateTime given the argument used during function call
+    if report == 'save_gap':  # standard situation
+        my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
+        simu_steps_per_reporting_step = \
+            int(timeframe.get_gap_report().total_seconds() / timeframe.get_gap_simu().total_seconds())
+    elif report == 'simu_gap':  # useful for debugging
+        my_list_datetime = timeframe.get_series_simu()  # list of DateTime to be written in file
+        simu_steps_per_reporting_step = 1
+    else:
+        raise Exception('Unknown reporting time gap for updating simulations files.')
+
+    with Dataset(netcdf_file + '.nc', 'w') as my_file:
+        my_file.createDimension('DateTime', None)
+        t = my_file.createVariable("DateTime", np.float64, ('DateTime',), zlib=True)
+        t.units = 'seconds since 1970-01-01 00:00:00.0'
+        my_file.createVariable('flow', np.float64, ('DateTime',), zlib=True, complevel=5)
+
+        my_file.variables['DateTime'][0:len(my_list_datetime[1:])] = \
+            (np.asarray(my_list_datetime[1:], dtype='datetime64[us]') - np.datetime64('1970-01-01T00:00:00Z')) / \
+            np.timedelta64(1, 's')
+
+        my_flows = list()
+        if method == 'summary':
+            for step in my_list_datetime[1:]:
+                my_values = list()
+                for my_sub_step in range(0, -simu_steps_per_reporting_step, -1):
+                    my_values.append(
+                        discharge[step + my_sub_step * timeframe.gap_simu])
+                my_flows.append(sum(my_values) / len(my_values))
+            my_file.variables['flow'][0:len(my_list_datetime[1:])] = my_flows
+
+        elif method == 'raw':
+            for step in my_list_datetime[1:]:
+                try:
+                    my_flows.append(discharge[step])
+                except KeyError:
+                    my_flows.append(np.nan)
+            my_file.variables['flow'][0:len(my_list_datetime[1:])] = my_flows
+        else:
+            raise Exception("Unknown method for updating simulations files.")
 
 
 def valid_file_format(fmt):
