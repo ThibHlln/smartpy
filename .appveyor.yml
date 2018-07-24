@@ -11,6 +11,7 @@ matrix:
 install:
   - "%PYTHON%\\python.exe -m pip install pytest"
   - "%PYTHON%\\python.exe -m pip install spotpy"
+  - "%PYTHON%\\python.exe -m pip install netCDF4"
   - "%PYTHON%\\python.exe -m pip install -e ."
 build: off
 test_script:
