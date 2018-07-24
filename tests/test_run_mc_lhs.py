@@ -9,7 +9,7 @@ class TestRunMonteCarloLHS(unittest.TestCase):
         self.catchment = 'ExampleDaily'
         self.root_f = 'examples/'
         self.sample_size = 5
-        self.parallel = False
+        self.parallel = 'seq'
         self.save_sim = True
 
         self.extra = {'aar': 1200, 'r-o_ratio': 0.45, 'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)}
