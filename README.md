@@ -8,8 +8,6 @@
 
 SMARTpy is an open-source hydrological catchment model in Python. It is licensed under GNU GPL-3.0 (see [licence file](LICENCE.md) provided). SMART (Soil Moisture Accounting and Routing for Transport) is a top-down rainfall-runoff model composed of a soil moisture accounting component and linear routing components. It requires rainfall and potential evapotranspiration time series as inputs, it features a set of ten parameters, and it yields a discharge time series.
 
-Mockler, E., O’Loughlin, F., and Bruen, M.: Understanding hydrological flow paths in conceptual catchment models using uncertainty and sensitivity analysis, *Computers & Geosciences*, 90, 66–77,[doi:10.1016/j.cageo.2015.08.015](https://dx.doi.org/10.1016/j.cageo.2015.08.015), 2016
-
 ## How to Install
 
 SMARTpy is available on PyPI, so you can simply use pip:
@@ -26,8 +24,7 @@ A tutorial in the form of a [Jupyter notebook](examples/api_usage_example.ipynb)
 
 ## Dependencies
 
-SMARTpy requires the popular Python package `numpy` and `scipy` to be installed on the Python implementation where `smartpy` is installed. For Python 2 and 3 compatibilities, the package `future` is also required.
-Additional optional dependencies include `netCDF4` if one wishes to use NetCDF files as input, and `smartcpp` if one wishes to use an accelerator module for the `SMART` model (it gives access to a [C++ extension for the SMART model](https://github.com/ThibHlln/smartcpp)).
+SMARTpy requires the popular Python packages `numpy` and `scipy` to be installed on the Python implementation where `smartpy` is installed. The package `future` is also required (used for Python 2 to 3 compatibilities). Additional optional dependencies include `netCDF4` if one wishes to use NetCDF files as input or output, and `smartcpp` if one wishes to use an accelerator module for the SMART model ([C++ extension for the SMART model](https://github.com/ThibHlln/smartcpp)).
 
 ## Model Specifications
 
@@ -53,12 +50,52 @@ Additional optional dependencies include `netCDF4` if one wishes to use NetCDF f
 
 * discharge time series at catchment outlet [m<sup>3</sup>/s]
 
-## Input File Formats
+### References
 
-SMARTpy is designed to read CSV (Comma-Separated Values) files and NetCDF (Network Common Data Form) input files. However, the use of NetCDF files requires the Python package `netCDF4` to be installed on the Python implementation where this package is installed (specific pre-requisites prior the installation of `netCDF4` exist and can be found at [unidata.github.io/netcdf4-python](http://unidata.github.io/netcdf4-python/)).
+Mockler, E., O’Loughlin, F., and Bruen, M.: Understanding hydrological flow paths in conceptual catchment models using uncertainty and sensitivity analysis, *Computers & Geosciences*, 90, 66–77,[doi:10.1016/j.cageo.2015.08.015](https://dx.doi.org/10.1016/j.cageo.2015.08.015), 2016
+
+## Input/Output File Formats
+
+SMARTpy is designed to read CSV (Comma-Separated Values) files and NetCDF (Network Common Data Form) input files (for rain, peva, and flow), as well as to write CSV and NetCDF output files (for discharge series, and monte carlo simulation results). However, the use of NetCDF files requires the Python package `netCDF4` to be installed on the Python implementation where SMARTpy is installed (specific pre-requisites prior the installation of `netCDF4` exist and can be found at [unidata.github.io/netcdf4-python](http://unidata.github.io/netcdf4-python/)).
+
+## Objective Functions
+
+For single simulations in SMARTpy, if observed discharge timeseries are available, the performance of the simulation can be assessed with a set of 8 objective functions:
+* Nash-Sutcliffe Efficiency (NSE)
+* Nash-Sutcliffe Efficiency on the log discharge series (lgNSE)
+* Nash-Sutcliffe Efficiency on the square root discharge series (rtNSE)
+* Bounded Nash-Sutcliffe Efficiency (C2M)
+* Kling-Gupta Efficiency (KGE)
+* Spearman Rank Correlation Coefficient (Rho)
+* Mean Absolute Relative Error (MARE)
+* Percent Bias (PBias)
+* Ground Water contribution to run-off (GW) [specific to the SMART model]
+
+For Monte Carlo simulations in SMARTpy, the 8 objective functions above will be calculated, as well as 4 additional objective functions available from `spotpy`:
+* The three components of the Kling-Gupta Efficiency 
+	* correlation coefficient c: error in dynamics (KGEc)
+	* alpha: error in variability (KGEa)
+	* central tendency beta: error in volume (KGEb)
+* Root Mean Square Error (RMSE)
+* Bias (Bias)
+
+## Monte Carlo Simulations
+
+The `montecarlo` suite of classes that comes with `smartpy` gives access to various options for Monte Carlo simulations. The parameter space of the SMART model can be explored using Latin Hypercube Sampling (`LHS`) for any sample size required. Once the sampling is complete for on a given simulation period, the performance of the whole set of parameter sets can be evaluated on another simulation period with `Total`, or the set of parameter sets can be conditioned according to their own performances against observed discharge data on any of the objective function(s) calculated by SMARTpy (using `GLUE` to distinguish from behavioural and non-behavioural parameter sets, or using `Best` to retain a pre-defined number of best performing samples) and the resulting subset of parameter sets can be evaluated on another simulation period.
+
+## Parallel Computing
+
+If Monte Carlo simulations are required, it is important to make use of the available computer power to reduce the runtime. Personal Computers now commonly feature several processor cores that can be used to run as many run of the SMART model in parallel (*i.e.* at the same time), not to mention High Performance Clusters, where the benefits of parallel computing will be even more significant. The `montecarlo` classes of `smartpy` are using the `spotpy` package to give access to an easy way to run simulations in parallel. `spotpy` itself requires `mpi4py` to operate, which applies to `smartpy` by extension. So before using `montecarlo` with `parallel='mpi'`, a Message Passing Interface (MPI) library (*e.g.* Open MPI) and `mpi4py` need to be installed on your machine, and `spotpy` needs to be installed too. Any of the `montecarlo` classes can take an optional argument parallel, its default value is set to 'seq' (for sequential computing), but can be set to 'mpi' if your setup allows it.
 
 ## Version History
 
+* 0.1.3 [24 Jul 2018]: Version improved for Monte Carlo simulations with parallel computing
+	* Adds a built-in Latin Hypercube Sampling function
+	* Adds a class Total in montecarlo to run sampling from LHS on an evaluation period
+	* Enables the use of NetCDF for output files (for both single run and Monte Carlo)
+	* Enables the use of NetCDF for reading sampling files (for Monte Carlo)
+	* Enables the use of NetCDF for input discharge files
+	* Allows for compression of output CSV files
 * 0.1.2 [18 Jul 2018]: Version functioning without evaluation data
     * Enables the use of SMARTpy without evaluation data
     * Makes it possible to set parameters values using a dictionary
