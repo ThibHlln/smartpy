@@ -91,31 +91,31 @@ class MonteCarlo(object):
     def _init_db(self, compression=6):
         if self.out_format == 'netcdf':
             if Dataset:  # check that netCDF4 is installed and imported
-                self.database = Dataset(self.db_file, 'w', parallel=self.p)
+                self.database = Dataset(self.db_file, 'w', format='NETCDF4', parallel=self.p)
                 # create structure of NetCDF file
                 # metadata
                 self.database.description = "Monte Carlo Simulation outputs with SMARTpy."
                 # dimensions
-                self.database.createDimension("NbSamples", len(self.p_map))
-                self.database.createDimension("NbParameters", len(self.model.parameters.names))
-                self.database.createDimension("NbObjFunctions", len(self.obj_fn_names))
+                self.database.createDimension('NbSamples', len(self.p_map))
+                self.database.createDimension('NbParameters', len(self.model.parameters.names))
+                self.database.createDimension('NbObjFunctions', len(self.obj_fn_names))
                 # variables
-                params = self.database.createVariable("Parameters", np.float32, ("NbSamples", "NbParameters"),
+                params = self.database.createVariable('Parameters', np.float32, ('NbSamples', 'NbParameters'),
                                                       zlib=True, complevel=compression)
                 params.units = ', '.join(self.model.parameters.names)
-                objfns = self.database.createVariable("ObjFunctions", np.float32, ("NbSamples", "NbObjFunctions"),
+                objfns = self.database.createVariable('ObjFunctions', np.float32, ('NbSamples', 'NbObjFunctions'),
                                                       zlib=True, complevel=compression)
                 objfns.units = ', '.join(self.obj_fn_names)
                 if self.save_sim:
                     # dimension
-                    self.database.createDimension("DateTime", None)  # Unlimited dimension
+                    self.database.createDimension('DateTime', len(self.model.flow))  # Unlimited dimension
                     # coordinate variables
-                    times = self.database.createVariable("DateTime", np.float64, ("DateTime",), zlib=True)
-                    times.units = 'seconds since 1970-01-01 00:00:00.0'
+                    times = self.database.createVariable('DateTime', np.float64, ('DateTime',), zlib=True)
+                    times.units = "seconds since 1970-01-01 00:00:00.0"
                     # variable
-                    simu = self.database.createVariable("Simulations", np.float32, ("NbSamples", "DateTime"),
+                    simu = self.database.createVariable('Simulations', np.float32, ('NbSamples', 'DateTime'),
                                                         zlib=True, complevel=compression)
-                    simu.units = 'Discharge in m3/s'
+                    simu.units = "Discharge in m3/s"
                     # write simulation datetime series as Unix timestamp series
                     datetimes = [np.datetime64(dt) for dt in self.model.flow]
                     timestamps = (datetimes - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
@@ -126,7 +126,7 @@ class MonteCarlo(object):
 
         else:  # fall back on to default option (CSV file)
             self.database = open_csv_wb(self.db_file)
-            simu_steps = [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in self.model.flow] if self.save_sim else []
+            simu_steps = [dt.strftime('%Y-%m-%d %H:%M:%S') for dt in self.model.flow] if self.save_sim else []
             # write header in database file
             self.database.write(','.join(self.obj_fn_names + self.param_names + simu_steps) + '\n')
 
@@ -205,7 +205,7 @@ class MonteCarlo(object):
             self.database.variables['ObjFunctions'][index, 0:len(self.obj_fn_names)] = obj_fns
             if self.save_sim:
                 # write simulation discharge time series
-                my_s, my_e = 0, len(self.database.variables['DateTime'])
+                my_s, my_e = 0, len(self.model.flow)
                 self.database.variables['Simulations'][index, my_s:my_e] = simulations[0]
         else:
             if self.save_sim:  # create a list of objectives functions + parameters + discharge series
