@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 setup(
     name='smartpy',
 
-    version='0.1.2',
+    version='0.1.3',
 
     description='SMARTpy: an open-source rainfall-runoff model in Python',
     long_description=long_desc,
