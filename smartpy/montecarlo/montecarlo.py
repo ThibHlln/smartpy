@@ -72,10 +72,10 @@ class MonteCarlo(object):
         self.param_names = self.model.parameters.names
         self.obj_fn_names = \
             ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb',
-             'Bias', 'PBias', 'RMSE', 'Rho', 'MARE'] \
+             'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW'] \
             if self.constraints['gw'] else \
             ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb',
-             'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW']
+             'Bias', 'PBias', 'RMSE', 'Rho', 'MARE']
 
         # define attributes to be used for sample of model parameters
         self.p_map = None
