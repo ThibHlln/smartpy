@@ -88,6 +88,9 @@ class MonteCarlo(object):
             self.model.out_f + '{}.SMART.{}'.format(catchment, func)
         self.database = None
 
+        # write out the observed discharge data used for the objective functions (that might have been shifted/rescaled)
+        self.model.write_output_files(which='observed')
+
     def _init_db(self, compression=6):
         if self.out_format == 'netcdf':
             if Dataset:  # check that netCDF4 is installed and imported
