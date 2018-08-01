@@ -73,7 +73,7 @@ class MonteCarlo(object):
         self.obj_fn_names = \
             ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb',
              'Bias', 'PBias', 'RMSE', 'Rho', 'MARE'] \
-            if self.constraints['gw'] == -999.0 else \
+            if self.constraints['gw'] else \
             ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb',
              'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW']
 

@@ -157,7 +157,7 @@ def get_dict_simulation_settings(file_location):
     try:
         gw_constraint = float(my_dict_args["gw_constraint"])
     except KeyError:
-        gw_constraint = -999.0  # i.e. no simulation constraint required
+        gw_constraint = None  # i.e. no simulation constraint required
     except ValueError:
         raise Exception('Setting GROUNDWATER CONSTRAINT could not be converted to a float.')
 
