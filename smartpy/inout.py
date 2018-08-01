@@ -240,7 +240,8 @@ def read_netcdf_time_series_with_delta_check(netcdf_file, key_variable, val_vari
             my_dict_data = dict()
             my_list_dt = list()
             try:
-                my_list_dt += [datetime.utcfromtimestamp(tstamp) for tstamp in my_file.variables[key_variable][:]]
+                my_list_dt += \
+                    [datetime(1970, 1, 1) + timedelta(seconds=tstamp) for tstamp in my_file.variables[key_variable][:]]
                 for idx, dt in enumerate(my_list_dt):
                     my_dict_data[dt] = my_file.variables[val_variable][idx]
             except KeyError:
@@ -281,7 +282,8 @@ def read_netcdf_time_series_with_missing_check(netcdf_file, key_variable, val_va
         with Dataset(netcdf_file, 'r') as my_file:
             my_dict_data = OrderedDict()
             try:
-                my_dts = [datetime.utcfromtimestamp(tstamp) for tstamp in my_file.variables[key_variable][:]]
+                my_dts = \
+                    [datetime(1970, 1, 1) + timedelta(seconds=tstamp) for tstamp in my_file.variables[key_variable][:]]
                 my_flows = my_file.variables[val_variable][:]
 
                 for dt, flow in zip(my_dts, my_flows):
