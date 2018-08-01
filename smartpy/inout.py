@@ -115,7 +115,7 @@ def get_dict_simulation_settings(file_location):
     try:
         g_area = float(my_dict_args["gauged_area_km2"]) * 1e6
     except KeyError:
-        raise Exception('Setting GAUGED AREA is missing from simulation file.')
+        g_area = c_area  # i.e. there is no gauge or area is the same
     except ValueError:
         raise Exception('Setting GAUGED AREA could not be converted to a float.')
     # START SIMULATION [datetime]
