@@ -32,13 +32,22 @@ def nash_sutcliffe(evaluation, simulation):
     return nse
 
 
-def log_nash_sutcliffe(evaluation, simulation):
+def log_nash_sutcliffe(evaluation, simulation, epsilon=None):
+    """
+    Pushpalatha, R., Perrin, C., Le Moine, N. and Andreassian, V. (2012).
+    A review of efficiency criteria suitable for evaluating low-flow simulations. Journal of Hydrology, 420, 171-182.
+    DOI: 10.1016/j.jhydrol.2011.11.055
+    """
+    if not epsilon:
+        # determine an epsilon value to avoid log of zero (following recommendation in Pushpalatha et al. (2012))
+        epsilon = 0.01 * np.mean(evaluation)
+
     # convert list to nd arrays
     nda_flows_mod, nda_flows_obs = np.asarray(simulation), np.asarray(evaluation)
 
     # calculate Square Root Nash-Sutcliffe Efficiency
-    sqrt_nse = 1 - (np.sum((np.log(nda_flows_obs) - np.log(nda_flows_mod)) ** 2) /
-                    np.sum((np.log(nda_flows_obs) - np.mean(np.log(nda_flows_obs))) ** 2))
+    sqrt_nse = 1 - (np.sum((np.log(nda_flows_obs + epsilon) - np.log(nda_flows_mod + epsilon)) ** 2) /
+                    np.sum((np.log(nda_flows_obs + epsilon) - np.mean(np.log(nda_flows_obs + epsilon))) ** 2))
 
     return sqrt_nse
 
