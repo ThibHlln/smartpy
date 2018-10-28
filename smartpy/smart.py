@@ -86,13 +86,13 @@ class SMART(object):
         self.gw_contribution = self.outputs[1]
         return self.outputs
 
-    def write_output_files(self, which='both'):
+    def write_output_files(self, which='both', parallel=False):
         if (which == 'both') or (which == 'modelled'):
             if self.outputs:
                 write_flow_file_from_dict(self.timeframe, self.discharge,
                                           ''.join([self.out_f, self.catchment, '.mod.flow']),
                                           out_file_format=self.out_fmt,
-                                          method='raw')
+                                          method='raw', parallel=parallel)
             else:
                 raise Exception("The output files cannot be written because the outputs attribute is unassigned. "
                                 "Please make sure to call the simulate method before writing the output files.")
@@ -102,7 +102,7 @@ class SMART(object):
                 write_flow_file_from_dict(self.timeframe, self.flow,
                                           ''.join([self.out_f, self.catchment, '.obs.flow']),
                                           out_file_format=self.out_fmt,
-                                          method='raw')
+                                          method='raw', parallel=parallel)
 
     def get_simulation_array(self):
         if self.outputs:

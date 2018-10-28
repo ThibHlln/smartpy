@@ -339,10 +339,12 @@ def write_flow_file_from_list(timeframe, discharge, csv_file, report='save_gap',
         raise Exception("Unknown method for updating simulations files.")
 
 
-def write_flow_file_from_dict(timeframe, discharge, the_file, out_file_format, report='save_gap', method='summary'):
+def write_flow_file_from_dict(timeframe, discharge, the_file, out_file_format,
+                              report='save_gap', method='summary', parallel=False):
     if out_file_format == 'netcdf':
         if Dataset:
-            write_flow_netcdf_file_from_dict(timeframe, discharge, the_file, report=report, method=method)
+            write_flow_netcdf_file_from_dict(timeframe, discharge, the_file,
+                                             report=report, method=method, parallel=parallel)
         else:
             raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
                             "please install it and retry, or choose another file format.")
@@ -389,7 +391,7 @@ def write_flow_csv_file_from_dict(timeframe, discharge, csv_file, report, method
         raise Exception("Unknown method for updating simulations files.")
 
 
-def write_flow_netcdf_file_from_dict(timeframe, discharge, netcdf_file, report, method):
+def write_flow_netcdf_file_from_dict(timeframe, discharge, netcdf_file, report, method, parallel):
     # Select the relevant list of DateTime given the argument used during function call
     if report == 'save_gap':  # standard situation
         my_list_datetime = timeframe.get_series_save()  # list of DateTime to be written in file
@@ -401,7 +403,7 @@ def write_flow_netcdf_file_from_dict(timeframe, discharge, netcdf_file, report, 
     else:
         raise Exception('Unknown reporting time gap for updating simulations files.')
 
-    with Dataset(netcdf_file + '.nc', 'w') as my_file:
+    with Dataset(netcdf_file + '.nc', 'w', format='NETCDF4', parallel=parallel) as my_file:
         my_file.createDimension('DateTime', None)
         t = my_file.createVariable("DateTime", np.float64, ('DateTime',), zlib=True)
         t.units = 'seconds since 1970-01-01 00:00:00.0'

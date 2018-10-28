@@ -89,7 +89,7 @@ class MonteCarlo(object):
         self.database = None
 
         # write out the observed discharge data used for the objective functions (that might have been shifted/rescaled)
-        self.model.write_output_files(which='observed')
+        self.model.write_output_files(which='observed', parallel=self.p)
 
     def _init_db(self, compression=6):
         if self.out_format == 'netcdf':
