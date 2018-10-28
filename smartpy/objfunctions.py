@@ -46,10 +46,10 @@ def log_nash_sutcliffe(evaluation, simulation, epsilon=None):
     nda_flows_mod, nda_flows_obs = np.asarray(simulation), np.asarray(evaluation)
 
     # calculate Square Root Nash-Sutcliffe Efficiency
-    sqrt_nse = 1 - (np.sum((np.log(nda_flows_obs + epsilon) - np.log(nda_flows_mod + epsilon)) ** 2) /
+    log_nse = 1 - (np.sum((np.log(nda_flows_obs + epsilon) - np.log(nda_flows_mod + epsilon)) ** 2) /
                     np.sum((np.log(nda_flows_obs + epsilon) - np.mean(np.log(nda_flows_obs + epsilon))) ** 2))
 
-    return sqrt_nse
+    return log_nse
 
 
 def sqrt_nash_sutcliffe(evaluation, simulation):
