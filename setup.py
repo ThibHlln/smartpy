@@ -6,10 +6,13 @@ from setuptools import setup
 with open("README.md", "r") as fh:
     long_desc = fh.read()
 
+with open('smartpy/version.py') as fv:
+    exec(fv.read())
+
 setup(
     name='smartpy',
 
-    version='0.1.3',
+    version=__version__,
 
     description='SMARTpy: an open-source rainfall-runoff model in Python',
     long_description=long_desc,

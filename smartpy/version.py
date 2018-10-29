@@ -18,6 +18,5 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
-from .smart import SMART
-from . import objfunctions
-from .version import __version__
+
+__version__ = '0.1.3'
