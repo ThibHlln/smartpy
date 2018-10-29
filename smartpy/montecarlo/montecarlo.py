@@ -40,6 +40,7 @@ from ..smart import SMART
 from ..inout import get_dict_simulation_settings, open_csv_rb, open_csv_wb
 from ..objfunctions import \
     groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
+from ..version import __version__
 
 
 class MonteCarlo(object):
@@ -97,7 +98,7 @@ class MonteCarlo(object):
                 self.database = Dataset(self.db_file, 'w', format='NETCDF4', parallel=self.p)
                 # create structure of NetCDF file
                 # metadata
-                self.database.description = "Monte Carlo Simulation outputs with SMARTpy."
+                self.database.description = "Monte Carlo Simulation outputs with SMARTpy v{}.".format(__version__)
                 # dimensions
                 self.database.createDimension('NbSamples', len(self.p_map))
                 self.database.createDimension('NbParameters', len(self.model.parameters.names))

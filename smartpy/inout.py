@@ -33,6 +33,7 @@ except ImportError:
 
 from .timeframe import get_required_resolution, check_interval_in_list, \
     rescale_time_resolution_of_irregular_mean_data, rescale_time_resolution_of_regular_cumulative_data
+from .version import __version__
 
 
 def open_csv_rb(my_file):
@@ -404,6 +405,7 @@ def write_flow_netcdf_file_from_dict(timeframe, discharge, netcdf_file, report, 
         raise Exception('Unknown reporting time gap for updating simulations files.')
 
     with Dataset(netcdf_file + '.nc', 'w', format='NETCDF4', parallel=parallel) as my_file:
+        my_file.description = "Discharge file generated with SMARTpy v{}.".format(__version__)
         my_file.createDimension('DateTime', None)
         t = my_file.createVariable("DateTime", np.float64, ('DateTime',), zlib=True)
         t.units = 'seconds since 1970-01-01 00:00:00.0'
