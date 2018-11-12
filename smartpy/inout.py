@@ -407,9 +407,9 @@ def write_flow_netcdf_file_from_dict(timeframe, discharge, netcdf_file, report, 
     with Dataset(netcdf_file + '.nc', 'w', format='NETCDF4', parallel=parallel) as my_file:
         my_file.description = "Discharge file generated with SMARTpy v{}.".format(__version__)
         my_file.createDimension('DateTime', None)
-        t = my_file.createVariable("DateTime", np.float64, ('DateTime',), zlib=True)
+        t = my_file.createVariable("DateTime", np.float64, ('DateTime',))
         t.units = 'seconds since 1970-01-01 00:00:00.0'
-        my_file.createVariable('flow', np.float64, ('DateTime',), zlib=True, complevel=5)
+        my_file.createVariable('flow', np.float64, ('DateTime',))
 
         my_file.variables['DateTime'][0:len(my_list_datetime[1:])] = \
             (np.asarray(my_list_datetime[1:], dtype='datetime64[us]') - np.datetime64('1970-01-01T00:00:00Z')) / \
