@@ -93,19 +93,11 @@ If Monte Carlo simulations are required, it is important to make use of the avai
 
 ## Version History
 
-* 0.1.3 [24 Jul 2018]: Version improved for Monte Carlo simulations with parallel computing
-	* Adds a built-in Latin Hypercube Sampling function
-	* Adds a class Total in montecarlo to run sampling from LHS on an evaluation period
-	* Enables the use of NetCDF for output files (for both single run and Monte Carlo)
-	* Enables the use of NetCDF for reading sampling files (for Monte Carlo)
-	* Enables the use of NetCDF for input discharge files
-	* Allows for compression of output CSV files
-* 0.1.2 [18 Jul 2018]: Version functioning without evaluation data
-    * Enables the use of SMARTpy without evaluation data
-    * Makes it possible to set parameters values using a dictionary
-* 0.1.1 [17 Jul 2018]: Version with proper PyPI display
-	* Fixes display issue of README.md on PyPI
-* 0.1.0 [17 Jul 2018]: First version of SMARTpy
+* 0.1.4 [12 Nov 2018]: [General enhancements](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.4)
+* 0.1.3 [24 Jul 2018]: [Version improved for Monte Carlo simulations with parallel computing](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.3)
+* 0.1.2 [18 Jul 2018]: [Version functioning without evaluation data](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.2)
+* 0.1.1 [17 Jul 2018]: [Version with proper PyPI display](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.1)
+* 0.1.0 [17 Jul 2018]: [First version of SMARTpy](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.0)
 
 ## Acknowledgment
 
