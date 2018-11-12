@@ -144,7 +144,7 @@ class MonteCarlo(object):
         # if compression argument given, the file created will be compressed
         if self.out_format == 'netcdf':
             if compression is True:
-                compression = 9
+                compression = 6
             if not isinstance(compression, bool) and isinstance(compression, (int, float)):
                 with Dataset(self.db_file, 'r') as src, Dataset(self.db_file.replace('.nc', '_.nc'), 'w') as dst:
                     dst.description = src.description
