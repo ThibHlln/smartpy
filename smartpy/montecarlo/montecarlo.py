@@ -21,7 +21,7 @@
 from builtins import map
 from csv import DictReader
 import numpy as np
-from os import sep, remove
+from os import sep, remove, rename
 from io import open
 import gzip
 import shutil
@@ -104,21 +104,18 @@ class MonteCarlo(object):
                 self.database.createDimension('NbParameters', len(self.model.parameters.names))
                 self.database.createDimension('NbObjFunctions', len(self.obj_fn_names))
                 # variables
-                params = self.database.createVariable('Parameters', np.float32, ('NbSamples', 'NbParameters'),
-                                                      zlib=True, complevel=compression)
+                params = self.database.createVariable('Parameters', np.float32, ('NbSamples', 'NbParameters'))
                 params.units = ', '.join(self.model.parameters.names)
-                objfns = self.database.createVariable('ObjFunctions', np.float32, ('NbSamples', 'NbObjFunctions'),
-                                                      zlib=True, complevel=compression)
+                objfns = self.database.createVariable('ObjFunctions', np.float32, ('NbSamples', 'NbObjFunctions'))
                 objfns.units = ', '.join(self.obj_fn_names)
                 if self.save_sim:
                     # dimension
                     self.database.createDimension('DateTime', len(self.model.flow))  # Unlimited dimension
                     # coordinate variables
-                    times = self.database.createVariable('DateTime', np.float64, ('DateTime',), zlib=True)
+                    times = self.database.createVariable('DateTime', np.float64, ('DateTime',))
                     times.units = "seconds since 1970-01-01 00:00:00.0"
                     # variable
-                    simu = self.database.createVariable('Simulations', np.float32, ('NbSamples', 'DateTime'),
-                                                        zlib=True, complevel=compression)
+                    simu = self.database.createVariable('Simulations', np.float32, ('NbSamples', 'DateTime'))
                     simu.units = "Discharge in m3/s"
                     # write simulation datetime series as Unix timestamp series
                     datetimes = [np.datetime64(dt) for dt in self.model.flow]
@@ -138,18 +135,29 @@ class MonteCarlo(object):
         return spotpy.parameter.generate(self.params)
 
     def run(self, compression=None):
-        # if compression specified, NetCDF4 needs to know compression level (between 1 and 9) when creating the file
-        if self.out_format == 'netcdf' and not isinstance(compression, bool) \
-                and isinstance(compression, (int, float)):
-            self._init_db(compression=compression)
-        else:
-            self._init_db()
+        # initialise the database (either CSV file or NETCDF file)
+        self._init_db()
         # run the Monte Carlo simulation
         sampler = spotpy.algorithms.mc(self, parallel=self.parallel)
         sampler.sample(len(self.p_map))
         self.database.close()
-        # if compression specified, the CSV file created will be compressed
-        if self.out_format == 'csv':
+        # if compression argument given, the file created will be compressed
+        if self.out_format == 'netcdf':
+            if compression is True:
+                compression = 9
+            if not isinstance(compression, bool) and isinstance(compression, (int, float)):
+                with Dataset(self.db_file, 'r') as src, Dataset(self.db_file.replace('.nc', '_.nc'), 'w') as dst:
+                    dst.description = src.description
+                    for name, dimension in src.dimensions.items():
+                        dst.createDimension(name, len(dimension))
+                    for name, variable in src.variables.items():
+                        v = dst.createVariable(name, variable.datatype, variable.dimensions,
+                                               zlib=True, complevel=compression)
+                        v.units = src.variables[name].units
+                        dst.variables[name][:] = src.variables[name][:]
+                remove(self.db_file)
+                rename(self.db_file.replace('.nc', '_.nc'), self.db_file)
+        elif self.out_format == 'csv':
             if compression is True:
                 with open(self.db_file, 'rb') as f_in:
                     with gzip.open(self.db_file + '.gz', 'wb') as f_out:

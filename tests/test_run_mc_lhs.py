@@ -28,11 +28,8 @@ class TestRunMonteCarloLHS(unittest.TestCase):
             # add some extra information to the model
             setup.model.extra = self.extra
 
-            # run the simulation (with compression test when CSV)
-            if out_fmt == 'csv':
-                setup.run(compression=True)
-            else:
-                setup.run()
+            # run the simulation (with compression test)
+            setup.run(compression=True)
 
 
 if __name__ == '__main__':
