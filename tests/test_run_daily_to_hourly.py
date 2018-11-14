@@ -129,7 +129,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
         my_res = dict()
         my_ref = dict()
         for dt in self.expected_outcome:
-            my_res[dt] = '%.6e' % self.sm.nd_discharge[self.sm.timeseries_report[1:] == dt]
+            my_res[dt] = '%.6e' % self.sm.nd_discharge[self.sm.timeseries_report[1:].index(dt)]
             my_ref[dt] = '%.6e' % self.expected_outcome[dt]
 
         # compare
