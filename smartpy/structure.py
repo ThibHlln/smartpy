@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+
 try:
     import smartcpp
     smart_in_cpp = True
@@ -28,27 +30,28 @@ except ImportError:
 
 
 def run(area_m2, delta,
-        rain, peva,
-        parameters, extra,
-        database, timeseries, timeseries_report,
-        report='summary',
+        nd_rain, nd_peva,
+        nd_parameters, extra,
+        timeseries, timeseries_report,
+        report,
         **kwargs):
     """
     This function defines the structure of the database using model outputs and states names
     and defines the initial conditions of the different reservoirs in the hydrological model
-    (either using a warm-up run if keyword argument 'warm_up'
+    (either using a warm-up run if keyword argument 'warm_up', or with an educated guess if
+    'extra' contains the necessary information)
 
-    :param area_m2:
-    :param delta:
-    :param rain:
-    :param peva:
-    :param parameters:
-    :param database:
-    :param timeseries:
-    :param timeseries_report:
-    :param report:
-    :param kwargs:
-    :return:
+    :param area_m2: catchment area in square meters
+    :param delta: duration between two simulations time steps as a TimeDelta object
+    :param nd_rain: numpy array containing the rainfall series
+    :param nd_peva: numpy array containing the potential evapotranspiration series
+    :param nd_parameters: numpy array containing the parameter values
+    :param extra: dictionary containing optional information for educated guess of initial conditions
+    :param timeseries: list of simulation time steps as DateTime objects
+    :param timeseries_report: list of reporting time steps as DateTime objects
+    :param report: reporting type (either 'summary' or 'raw')
+    :param kwargs: additional keyword arguments
+    :return: numpy array for discharge series and scalar for groundwater component to runoff
     """
 
     # determine whether SMARTcpp (C++ extension of SMART for Python) can be used or not
@@ -57,202 +60,160 @@ def run(area_m2, delta,
     else:
         one_step = run_one_step
 
-    # model_states_reservoirs = ['V_ove', 'V_dra', 'V_int', 'V_sgw', 'V_dgw', 'V_river']
-    model_states_soil_layers = ['V_ly1', 'V_ly2', 'V_ly3', 'V_ly4', 'V_ly5', 'V_ly6']
+    # determine temporal information
+    simu_length = len(timeseries)
+    delta_sec = delta.total_seconds()
+    report_gap = (len(timeseries) - 1) // (len(timeseries_report) - 1)
+
+    # set up the data structures
+    model_states = ['V_ove', 'V_dra', 'V_int', 'V_sgw', 'V_dgw',
+                    'V_ly1', 'V_ly2', 'V_ly3', 'V_ly4', 'V_ly5', 'V_ly6',
+                    'V_river']
     model_outputs = ['Q_aeva', 'Q_ove', 'Q_dra', 'Q_int', 'Q_sgw', 'Q_dgw', 'Q_out']
+    model_variables = model_outputs + model_states
+
+    nd_storage = np.zeros((len(timeseries), len(model_variables)), dtype=np.float64)
 
     # set initial conditions
     if kwargs['warm_up'] != 0:  # either using warm-up run
-        warm_up_end_index = int(kwargs['warm_up'] * 86400 / delta.total_seconds()) + 1
-        database_wu = {timeseries[0]: {name: 0.0 for name in model_outputs}}
+        warm_up_length = int(kwargs['warm_up'] * 86400 / delta.total_seconds()) + 1
+
+        nd_storage_wu = np.zeros((warm_up_length, len(model_variables)), dtype=np.float64)
+
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 60/30/10% GW/Soil/Surface)
         if extra:
-            database_wu[timeseries[0]].update(
-                {'V_river': (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * parameters['RK'],
-                 'V_ove':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] /
-                     1000 * area_m2 / 8766 * parameters['SK'],
-                 'V_int':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] /
-                     1000 * area_m2 / 8766 * parameters['FK'],
-                 'V_dra':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] /
-                     1000 * area_m2 / 8766 * parameters['FK'],
-                 'V_sgw':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] /
-                     1000 * area_m2 / 8766 * parameters['GK'],
-                 'V_dgw':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] /
-                     1000 * area_m2 / 8766 * parameters['GK']}
-            )
-        else:
-            database_wu[timeseries[0]].update(
-                {'V_river': 0.0,
-                 'V_ove': 0.0,
-                 'V_int': 0.0,
-                 'V_dra': 0.0,
-                 'V_sgw': 0.0,
-                 'V_dgw': 0.0}
-            )
+            nd_storage_wu[0, model_variables.index('V_ove')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] / 1000 * area_m2 / 8766 * nd_parameters[6]
+            nd_storage_wu[0, model_variables.index('V_dra')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[7]
+            nd_storage_wu[0, model_variables.index('V_int')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] / 1000 * area_m2 / 8766 * nd_parameters[7]
+            nd_storage_wu[0, model_variables.index('V_sgw')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] / 1000 * area_m2 / 8766 * nd_parameters[8]
+            nd_storage_wu[0, model_variables.index('V_dgw')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] / 1000 * area_m2 / 8766 * nd_parameters[8]
+            nd_storage_wu[0, model_variables.index('V_river')] = \
+                (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * nd_parameters[9]
+
         # start with soil layers half full (six soil layers so half gives /12)
-        database_wu[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
-                                           for name in model_states_soil_layers})  # six soil layers so half gives /12
+        nd_storage_wu[0, model_variables.index('V_ly1'):(model_variables.index('V_ly6') + 1)] = \
+            (nd_parameters[5] / 12) / 1000 * area_m2
+
         run_all_steps(one_step,
-                      area_m2, delta,
-                      rain, peva,
-                      parameters,
-                      database_wu,
-                      timeseries[0:warm_up_end_index], timeseries_report, report)
-        database[timeseries[0]] = database_wu[timeseries[warm_up_end_index - 1]]
+                      area_m2, delta_sec, warm_up_length,
+                      nd_rain, nd_peva,
+                      nd_parameters, nd_storage_wu,
+                      report, report_gap)
+
+        nd_storage[0, :] = nd_storage_wu[-1, :]
     else:  # or starting without warm-up run
-        database[timeseries[0]] = {name: 0.0 for name in model_outputs}
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 10/30/60% Surface/Soil/GW)
         if extra:
-            database[timeseries[0]].update(
-                {'V_river': (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * parameters['RK'],
-                 'V_ove':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] /
-                     1000 * area_m2 / 8766 * parameters['SK'],
-                 'V_int':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] /
-                     1000 * area_m2 / 8766 * parameters['FK'],
-                 'V_dra':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] /
-                     1000 * area_m2 / 8766 * parameters['FK'],
-                 'V_sgw':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] /
-                     1000 * area_m2 / 8766 * parameters['GK'],
-                 'V_dgw':
-                     (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] /
-                     1000 * area_m2 / 8766 * parameters['GK']}
-            )
-        else:
-            database[timeseries[0]].update(
-                {'V_river': 0.0,
-                 'V_ove': 0.0,
-                 'V_int': 0.0,
-                 'V_dra': 0.0,
-                 'V_sgw': 0.0,
-                 'V_dgw': 0.0}
-            )
+            nd_storage[0, model_variables.index('V_ove')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] / 1000 * area_m2 / 8766 * nd_parameters[6]
+            nd_storage[0, model_variables.index('V_dra')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[7]
+            nd_storage[0, model_variables.index('V_int')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] / 1000 * area_m2 / 8766 * nd_parameters[7]
+            nd_storage[0, model_variables.index('V_sgw')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] / 1000 * area_m2 / 8766 * nd_parameters[7]
+            nd_storage[0, model_variables.index('V_dgw')] = \
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] / 1000 * area_m2 / 8766 * nd_parameters[8]
+            nd_storage[0, model_variables.index('V_river')] = \
+                (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * nd_parameters[9]
         # start with soil layers half full (six soil layers so half gives /12)
-        database[timeseries[0]].update({name: (parameters['Z'] / 12) / 1000 * area_m2
-                                        for name in model_states_soil_layers})
+        nd_storage[0, model_variables.index('V_ly1'):(model_variables.index('V_ly6') + 1)] = \
+            (nd_parameters[5] / 12) / 1000 * area_m2
 
     # run the actual simulation
     return run_all_steps(one_step,
-                         area_m2, delta,
-                         rain, peva,
-                         parameters,
-                         database,
-                         timeseries, timeseries_report, report)
+                         area_m2, delta_sec, simu_length,
+                         nd_rain, nd_peva,
+                         nd_parameters, nd_storage,
+                         report, report_gap)
 
 
 def run_all_steps(smart_one_step,
-                  area_m2, delta,
-                  rain, peva,
-                  parameters,
-                  database, timeseries, timeseries_report,
-                  report):
+                  area_m2, delta_sec, length_simu,
+                  nd_rain, nd_peva,
+                  nd_parameters, nd_storage,
+                  report, report_gap):
     """
     This function calls the hydrological model (run_one_step) for all the time steps in the period in sequence.
-    It returns the simulated discharge at the outlet for the simulation period.
+    It returns the simulated discharge at the outlet for the simulation period, as well as the proportion of runoff
+    contributed by the two groundwater pathways.
 
-    :param smart_one_step:
-    :param area_m2:
-    :param delta:
-    :param rain:
-    :param peva:
-    :param parameters:
-    :param database:
-    :param timeseries:
-    :param timeseries_report:
-    :param report:
-    :return:
+    :param smart_one_step: reference to function to run one simulation step
+    :param area_m2: catchment area in square meters
+    :param delta_sec: duration between two simulations time steps in seconds
+    :param length_simu: number of simulation time steps (including initial step)
+    :param nd_rain: numpy array containing the rainfall series
+    :param nd_peva: numpy array containing the potential evapotranspiration series
+    :param nd_parameters: numpy array containing the parameter values
+    :param nd_storage: numpy array containing outputs and states (axis 1) for each simulation time step (axis 0)
+    :param report: reporting type (either 'summary' or 'raw')
+    :param report_gap: number of simulation time steps contained in one reporting time step
+    :return: numpy array for discharge series and scalar for groundwater component to runoff
     """
-    discharge = dict()
-    q_out = list()
-    q_ove, q_dra, q_int, q_sgw, q_dgw = 0.0, 0.0, 0.0, 0.0, 0.0
-    i_report = 1
-    delta_sec = delta.total_seconds()
-    for dt in timeseries[1:]:
-        database[dt] = dict()
-        database[dt]['Q_aeva'], database[dt]['Q_ove'], database[dt]['Q_dra'], database[dt]['Q_int'], \
-            database[dt]['Q_sgw'], database[dt]['Q_dgw'], database[dt]['Q_out'], \
-            database[dt]['V_ove'], database[dt]['V_dra'], database[dt]['V_int'], \
-            database[dt]['V_sgw'], database[dt]['V_dgw'], database[dt]['V_ly1'], \
-            database[dt]['V_ly2'], database[dt]['V_ly3'], database[dt]['V_ly4'], \
-            database[dt]['V_ly5'], database[dt]['V_ly6'], database[dt]['V_river'] = \
-            smart_one_step(
-                area_m2, delta_sec,
-                rain[dt], peva[dt],
-                parameters['T'], parameters['C'], parameters['H'], parameters['D'], parameters['S'],
-                parameters['Z'], parameters['SK'], parameters['FK'], parameters['GK'], parameters['RK'],
-                database[dt - delta]['V_ove'], database[dt - delta]['V_dra'], database[dt - delta]['V_int'],
-                database[dt - delta]['V_sgw'], database[dt - delta]['V_dgw'], database[dt - delta]['V_ly1'],
-                database[dt - delta]['V_ly2'], database[dt - delta]['V_ly3'], database[dt - delta]['V_ly4'],
-                database[dt - delta]['V_ly5'], database[dt - delta]['V_ly6'], database[dt - delta]['V_river']
-            )
+    for i in range(1, length_simu):
+        nd_storage[i, :] = smart_one_step(area_m2, delta_sec,
+                                          nd_rain[i - 1], nd_peva[i - 1],
+                                          nd_parameters[0], nd_parameters[1], nd_parameters[2], nd_parameters[3],
+                                          nd_parameters[4], nd_parameters[5], nd_parameters[6], nd_parameters[7],
+                                          nd_parameters[8], nd_parameters[9],
+                                          *nd_storage[i - 1, 7:])
 
-        q_out.append(database[dt]['Q_out'])
-        q_ove += database[dt]['Q_ove']
-        q_dra += database[dt]['Q_dra']
-        q_int += database[dt]['Q_int']
-        q_sgw += database[dt]['Q_sgw']
-        q_dgw += database[dt]['Q_dgw']
+    if report == 'summary':
+        discharge = np.mean(np.reshape(nd_storage[1:, 6], (-1, report_gap)), axis=-1)
+    elif report == 'raw':
+        discharge = nd_storage[1:, 6][::-report_gap][::-1]
+    else:
+        raise Exception('Reporting type \'{}\' unknown.'.format(report))
 
-        if dt == timeseries_report[i_report]:
-            if report == 'summary':
-                discharge[dt] = sum(q_out) / len(q_out)
-                del q_out[:]
-                i_report += 1
-            elif report == 'raw':
-                discharge[dt] = database[dt]['Q_out']
-                del q_out[:]
-                i_report += 1
+    groundwater_component = np.sum(nd_storage[1:, [4, 5]]) / np.sum(nd_storage[1:, [1, 2, 3, 4, 5]])
 
-    return discharge, (q_sgw + q_dgw) / (q_ove + q_dra + q_int + q_sgw + q_dgw)
+    return discharge, groundwater_component
 
 
 def run_one_step(area_m2, time_delta_sec,
                  c_in_rain, c_in_peva,
-                 c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk, r_p_k_h2o,
+                 c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk, r_p_rk,
                  c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
                  c_s_v_h2o_ly1, c_s_v_h2o_ly2, c_s_v_h2o_ly3, c_s_v_h2o_ly4, c_s_v_h2o_ly5, c_s_v_h2o_ly6,
-                 r_s_v_h2o
+                 r_s_v_riv
                  ):
     """
     This function links catchment model outputs and river routing model input.
     Altogether they form the hydrological model running one step.
     It returns all the outputs and states of the two models as a tuple.
 
-    :param area_m2:
-    :param time_delta_sec:
-    :param c_in_rain:
-    :param c_in_peva:
-    :param c_p_t:
-    :param c_p_c:
-    :param c_p_h:
-    :param c_p_d:
-    :param c_p_s:
-    :param c_p_z:
-    :param c_p_sk:
-    :param c_p_fk:
-    :param c_p_gk:
-    :param r_p_k_h2o:
-    :param c_s_v_h2o_ove:
-    :param c_s_v_h2o_dra:
-    :param c_s_v_h2o_int:
-    :param c_s_v_h2o_sgw:
-    :param c_s_v_h2o_dgw:
-    :param c_s_v_h2o_ly1:
-    :param c_s_v_h2o_ly2:
-    :param c_s_v_h2o_ly3:
-    :param c_s_v_h2o_ly4:
-    :param c_s_v_h2o_ly5:
-    :param c_s_v_h2o_ly6:
-    :param r_s_v_h2o:
-    :return:
+    :param area_m2: catchment area in square meters
+    :param time_delta_sec: simulation time step in seconds
+    :param c_in_rain: cumulative rainfall in millimeters per time step for the simulation time step
+    :param c_in_peva: cumulative potential evapotranspiration in millimeters per time step for the simulation time step
+    :param c_p_t: SMART parameter T
+    :param c_p_c: SMART parameter C
+    :param c_p_h: SMART parameter H
+    :param c_p_d: SMART parameter D
+    :param c_p_s: SMART parameter S
+    :param c_p_z: SMART parameter Z
+    :param c_p_sk: SMART parameter SK
+    :param c_p_fk: SMART parameter FK
+    :param c_p_gk: SMART parameter GK
+    :param r_p_rk: SMART parameter RK
+    :param c_s_v_h2o_ove: SMART catchment state for overland flow reservoir
+    :param c_s_v_h2o_dra: SMART catchment state for drain flow reservoir
+    :param c_s_v_h2o_int: SMART catchment state for inter flow reservoir
+    :param c_s_v_h2o_sgw: SMART catchment state for shallow groundwater flow reservoir
+    :param c_s_v_h2o_dgw: SMART catchment state for deep groundwater flow reservoir
+    :param c_s_v_h2o_ly1: SMART catchment state for first soil layer
+    :param c_s_v_h2o_ly2: SMART catchment state for second soil layer
+    :param c_s_v_h2o_ly3: SMART catchment state for third soil layer
+    :param c_s_v_h2o_ly4: SMART catchment state for fourth soil layer
+    :param c_s_v_h2o_ly5: SMART catchment state for fifth soil layer
+    :param c_s_v_h2o_ly6: SMART catchment state for sixth soil layer
+    :param r_s_v_riv: SMART river state for channel reservoir
+    :return: SMART outputs and states
     """
     out_aeva, out_q_h2o_ove, out_q_h2o_dra, out_q_h2o_int, out_q_h2o_sgw, out_q_h2o_dgw, \
         s_v_h2o_ove, s_v_h2o_dra, s_v_h2o_int, s_v_h2o_sgw, s_v_h2o_dgw, \
@@ -269,8 +230,8 @@ def run_one_step(area_m2, time_delta_sec,
         run_one_step_river(
             time_delta_sec,
             out_q_h2o_ove + out_q_h2o_dra + out_q_h2o_int + out_q_h2o_sgw + out_q_h2o_dgw,
-            r_p_k_h2o,
-            r_s_v_h2o
+            r_p_rk,
+            r_s_v_riv
         )
 
     return (
@@ -284,8 +245,8 @@ def run_one_step(area_m2, time_delta_sec,
 def run_one_step_catchment(area_m2, time_gap_sec,
                            c_in_rain, c_in_peva,
                            c_p_t, c_p_c, c_p_h, c_p_d, c_p_s, c_p_z, c_p_sk, c_p_fk, c_p_gk,
-                           c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
-                           c_s_v_h2o_ly1, c_s_v_h2o_ly2, c_s_v_h2o_ly3, c_s_v_h2o_ly4, c_s_v_h2o_ly5, c_s_v_h2o_ly6
+                           c_s_v_ove, c_s_v_dra, c_s_v_int, c_s_v_sgw, c_s_v_dgw,
+                           c_s_v_ly1, c_s_v_ly2, c_s_v_ly3, c_s_v_ly4, c_s_v_ly5, c_s_v_ly6
                            ):
     """
     This function was written by Thibault Hallouin but is largely inspired by the work of Eva Mockler, namely for
@@ -296,37 +257,37 @@ def run_one_step_catchment(area_m2, time_gap_sec,
     Catchment model * c_ *
     _ Hydrology
     ___ Inputs * in_ *
-    _____ c_in_rain             precipitation as rain [mm/time step]
-    _____ c_in_peva             potential evapotranspiration [mm/time step]
+    _____ c_in_rain         precipitation as rain [mm/time step]
+    _____ c_in_peva         potential evapotranspiration [mm/time step]
     ___ Parameters * p_ *
-    _____ c_p_t                 T: rainfall aerial correction coefficient
-    _____ c_p_c                 C: evaporation decay parameter
-    _____ c_p_h                 H: quick runoff coefficient
-    _____ c_p_d                 D: drain flow parameter - fraction of saturation excess diverted to drain flow
-    _____ c_p_s                 S: soil outflow coefficient
-    _____ c_p_z                 Z: effective soil depth [mm]
-    _____ c_p_sk                SK: surface routing parameter [hours]
-    _____ c_p_fk                FK: inter flow routing parameter [hours]
-    _____ c_p_gk                GK: groundwater routing parameter [hours]
+    _____ c_p_t             T: rainfall aerial correction coefficient
+    _____ c_p_c             C: evaporation decay parameter
+    _____ c_p_h             H: quick runoff coefficient
+    _____ c_p_d             D: drain flow parameter - fraction of saturation excess diverted to drain flow
+    _____ c_p_s             S: soil outflow coefficient
+    _____ c_p_z             Z: effective soil depth [mm]
+    _____ c_p_sk            SK: surface routing parameter [hours]
+    _____ c_p_fk            FK: inter flow routing parameter [hours]
+    _____ c_p_gk            GK: groundwater routing parameter [hours]
     ___ States * s_ *
-    _____ c_s_v_h2o_ove         volume of water in overland store [m3]
-    _____ c_s_v_h2o_dra         volume of water in drain store [m3]
-    _____ c_s_v_h2o_int         volume of water in inter store [m3]
-    _____ c_s_v_h2o_sgw         volume of water in shallow groundwater store [m3]
-    _____ c_s_v_h2o_dgw         volume of water in deep groundwater store [m3]
-    _____ c_s_v_h2o_ly1         volume of water in first soil layer store [m3]
-    _____ c_s_v_h2o_ly2         volume of water in second soil layer store [m3]
-    _____ c_s_v_h2o_ly3         volume of water in third soil layer store [m3]
-    _____ c_s_v_h2o_ly4         volume of water in fourth soil layer store [m3]
-    _____ c_s_v_h2o_ly5         volume of water in fifth soil layer store [m3]
-    _____ c_s_v_h2o_ly6         volume of water in sixth soil layer store [m3]
+    _____ c_s_v_ove         volume of water in overland store [m3]
+    _____ c_s_v_dra         volume of water in drain store [m3]
+    _____ c_s_v_int         volume of water in inter store [m3]
+    _____ c_s_v_sgw         volume of water in shallow groundwater store [m3]
+    _____ c_s_v_dgw         volume of water in deep groundwater store [m3]
+    _____ c_s_v_ly1         volume of water in first soil layer store [m3]
+    _____ c_s_v_ly2         volume of water in second soil layer store [m3]
+    _____ c_s_v_ly3         volume of water in third soil layer store [m3]
+    _____ c_s_v_ly4         volume of water in fourth soil layer store [m3]
+    _____ c_s_v_ly5         volume of water in fifth soil layer store [m3]
+    _____ c_s_v_ly6         volume of water in sixth soil layer store [m3]
     ___ Outputs * out_ *
-    _____ c_out_aeva            actual evapotranspiration [m3/s]
-    _____ c_out_q_h2o_ove       overland flow [m3/s]
-    _____ c_out_q_h2o_dra       drain flow [m3/s]
-    _____ c_out_q_h2o_int       inter flow [m3/s]
-    _____ c_out_q_h2o_sgw       shallow groundwater flow [m3/s]
-    _____ c_out_q_h2o_dgw       deep groundwater flow [m3/s]
+    _____ c_out_aeva        actual evapotranspiration [m3/s]
+    _____ c_out_q_ove       overland flow [m3/s]
+    _____ c_out_q_dra       drain flow [m3/s]
+    _____ c_out_q_int       inter flow [m3/s]
+    _____ c_out_q_sgw       shallow groundwater flow [m3/s]
+    _____ c_out_q_dgw       deep groundwater flow [m3/s]
     """
 
     # # 1. Hydrology
@@ -355,12 +316,12 @@ def run_one_step_catchment(area_m2, time_gap_sec,
 
     list_lvl_lyr = [  # factor 1000 to convert m in mm
         0.0,  # artificial null value added to keep script clear later
-        c_s_v_h2o_ly1 / area_m2 * 1e3,  # Soil Layer 1
-        c_s_v_h2o_ly2 / area_m2 * 1e3,  # Soil Layer 2
-        c_s_v_h2o_ly3 / area_m2 * 1e3,  # Soil Layer 3
-        c_s_v_h2o_ly4 / area_m2 * 1e3,  # Soil Layer 4
-        c_s_v_h2o_ly5 / area_m2 * 1e3,  # Soil Layer 5
-        c_s_v_h2o_ly6 / area_m2 * 1e3  # Soil Layer 6
+        c_s_v_ly1 / area_m2 * 1e3,  # Soil Layer 1
+        c_s_v_ly2 / area_m2 * 1e3,  # Soil Layer 2
+        c_s_v_ly3 / area_m2 * 1e3,  # Soil Layer 3
+        c_s_v_ly4 / area_m2 * 1e3,  # Soil Layer 4
+        c_s_v_ly5 / area_m2 * 1e3,  # Soil Layer 5
+        c_s_v_ly6 / area_m2 * 1e3  # Soil Layer 6
     ]
 
     # calculate cumulative level of water in all soil layers at beginning of time step (i.e. soil moisture)
@@ -441,35 +402,35 @@ def run_one_step_catchment(area_m2, time_gap_sec,
     c_out_aeva = aeva / 1e3 * area_m2 / time_gap_sec  # [m3/s]
 
     # route overland flow (quick surface runoff)
-    c_out_q_h2o_ove = c_s_v_h2o_ove / c_p_sk  # [m3/s]
-    c_s_v_h2o_ove += (overland_flow / 1e3 * area_m2) - (c_out_q_h2o_ove * time_gap_sec)  # [m3] - [m3]
-    if c_s_v_h2o_ove < 0.0:
-        c_s_v_h2o_ove = 0.0
+    c_out_q_h2o_ove = c_s_v_ove / c_p_sk  # [m3/s]
+    c_s_v_ove += (overland_flow / 1e3 * area_m2) - (c_out_q_h2o_ove * time_gap_sec)  # [m3] - [m3]
+    if c_s_v_ove < 0.0:
+        c_s_v_ove = 0.0
     # route drain flow (quick interflow runoff)
-    c_out_q_h2o_dra = c_s_v_h2o_dra / c_p_sk  # [m3/s]
-    c_s_v_h2o_dra += (drain_flow / 1e3 * area_m2) - (c_out_q_h2o_dra * time_gap_sec)  # [m3] - [m3]
-    if c_s_v_h2o_dra < 0.0:
-        c_s_v_h2o_dra = 0.0
+    c_out_q_h2o_dra = c_s_v_dra / c_p_sk  # [m3/s]
+    c_s_v_dra += (drain_flow / 1e3 * area_m2) - (c_out_q_h2o_dra * time_gap_sec)  # [m3] - [m3]
+    if c_s_v_dra < 0.0:
+        c_s_v_dra = 0.0
     # route interflow (slow interflow runoff)
-    c_out_q_h2o_int = c_s_v_h2o_int / c_p_fk  # [m3/s]
-    c_s_v_h2o_int += (inter_flow / 1e3 * area_m2) - (c_out_q_h2o_int * time_gap_sec)  # [m3] - [m3]
-    if c_s_v_h2o_int < 0.0:
-        c_s_v_h2o_int = 0.0
+    c_out_q_h2o_int = c_s_v_int / c_p_fk  # [m3/s]
+    c_s_v_int += (inter_flow / 1e3 * area_m2) - (c_out_q_h2o_int * time_gap_sec)  # [m3] - [m3]
+    if c_s_v_int < 0.0:
+        c_s_v_int = 0.0
     # route shallow groundwater flow (slow shallow GW runoff)
-    c_out_q_h2o_sgw = c_s_v_h2o_sgw / c_p_gk  # [m3/s]
-    c_s_v_h2o_sgw += (shallow_flow / 1e3 * area_m2) - (c_out_q_h2o_sgw * time_gap_sec)  # [m3] - [m3]
-    if c_s_v_h2o_sgw < 0.0:
-        c_s_v_h2o_sgw = 0.0
+    c_out_q_h2o_sgw = c_s_v_sgw / c_p_gk  # [m3/s]
+    c_s_v_sgw += (shallow_flow / 1e3 * area_m2) - (c_out_q_h2o_sgw * time_gap_sec)  # [m3] - [m3]
+    if c_s_v_sgw < 0.0:
+        c_s_v_sgw = 0.0
     # route deep groundwater flow (slow deep GW runoff)
-    c_out_q_h2o_dgw = c_s_v_h2o_dgw / c_p_gk  # [m3/s]
-    c_s_v_h2o_dgw += (deep_flow / 1e3 * area_m2) - (c_out_q_h2o_dgw * time_gap_sec)  # [m3] - [m3]
-    if c_s_v_h2o_dgw < 0.0:
-        c_s_v_h2o_dgw = 0.0
+    c_out_q_h2o_dgw = c_s_v_dgw / c_p_gk  # [m3/s]
+    c_s_v_dgw += (deep_flow / 1e3 * area_m2) - (c_out_q_h2o_dgw * time_gap_sec)  # [m3] - [m3]
+    if c_s_v_dgw < 0.0:
+        c_s_v_dgw = 0.0
 
     # # 1.3. Return outputs and states
     return (
         c_out_aeva, c_out_q_h2o_ove, c_out_q_h2o_dra, c_out_q_h2o_int, c_out_q_h2o_sgw, c_out_q_h2o_dgw,
-        c_s_v_h2o_ove, c_s_v_h2o_dra, c_s_v_h2o_int, c_s_v_h2o_sgw, c_s_v_h2o_dgw,
+        c_s_v_ove, c_s_v_dra, c_s_v_int, c_s_v_sgw, c_s_v_dgw,
         list_lvl_lyr[1] / 1e3 * area_m2, list_lvl_lyr[2] / 1e3 * area_m2, list_lvl_lyr[3] / 1e3 * area_m2,
         list_lvl_lyr[4] / 1e3 * area_m2, list_lvl_lyr[5] / 1e3 * area_m2, list_lvl_lyr[6] / 1e3 * area_m2
     )

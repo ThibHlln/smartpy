@@ -125,11 +125,11 @@ class TestRunDaily2Hourly(unittest.TestCase):
         # run the SMART model
         self.sm.simulate(self.sm.parameters.values)
 
-        # round all values to 12 decimals
+        # round all values to 6 decimals
         my_res = dict()
         my_ref = dict()
         for dt in self.expected_outcome:
-            my_res[dt] = '%.6e' % self.sm.discharge[dt]
+            my_res[dt] = '%.6e' % self.sm.nd_discharge[self.sm.timeseries_report[1:] == dt]
             my_ref[dt] = '%.6e' % self.expected_outcome[dt]
 
         # compare

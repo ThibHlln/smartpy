@@ -38,8 +38,7 @@ except ImportError:
 
 from ..smart import SMART
 from ..inout import get_dict_simulation_settings, open_csv_rb, open_csv_wb
-from ..objfunctions import \
-    groundwater_constraint, bounded_nash_sutcliffe, sqrt_nash_sutcliffe, spearman_rank_corr, mean_abs_rel_error
+from ..objfunctions import groundwater_constraint
 from ..version import __version__
 
 
@@ -72,11 +71,9 @@ class MonteCarlo(object):
         # collect list of parameters and objective functions names that are common for all Monte Carlo classes
         self.param_names = self.model.parameters.names
         self.obj_fn_names = \
-            ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb',
-             'Bias', 'PBias', 'RMSE', 'Rho', 'MARE', 'GW'] \
+            ['NSE', 'KGE', 'KGEc', 'KGEa', 'KGEb', 'PBias', 'RMSE', 'GW'] \
             if self.constraints['gw'] else \
-            ['NSE', 'lgNSE', 'rtNSE', 'C2M', 'KGE', 'KGEc', 'KGEa', 'KGEb',
-             'Bias', 'PBias', 'RMSE', 'Rho', 'MARE']
+            ['NSE', 'KGE', 'KGEc', 'KGEa', 'KGEb', 'PBias', 'RMSE']
 
         # define attributes to be used for sample of model parameters
         self.p_map = None
@@ -92,7 +89,7 @@ class MonteCarlo(object):
         # write out the observed discharge data used for the objective functions (that might have been shifted/rescaled)
         self.model.write_output_files(which='observed', parallel=self.p)
 
-    def _init_db(self, compression=6):
+    def _init_db(self):
         if self.out_format == 'netcdf':
             if Dataset:  # check that netCDF4 is installed and imported
                 self.database = Dataset(self.db_file, 'w', format='NETCDF4', parallel=self.p)
@@ -165,21 +162,18 @@ class MonteCarlo(object):
                 remove(self.db_file)
 
     def simulation(self, vector):
-        simulations, constraint = self.model.simulate({
-            'T': vector[0], 'C': vector[1], 'H': vector[2], 'D': vector[3], 'S': vector[4], 'Z': vector[5],
-            'SK': vector[6], 'FK': vector[7], 'GK': vector[8], 'RK': vector[9]
-        })
-        # returns only simulations with observations
-        return [
-            [simulations[dt] for dt in self.model.flow],
-            [constraint]
-        ]
+        discharge, groundwater_component = self.model.simulate(
+            {'T': vector[0], 'C': vector[1], 'H': vector[2], 'D': vector[3], 'S': vector[4], 'Z': vector[5],
+             'SK': vector[6], 'FK': vector[7], 'GK': vector[8], 'RK': vector[9]}
+        )
+        return (
+            discharge, [groundwater_component]
+        )
 
     def evaluation(self):
-        return [
-            np.asarray([observation for observation in self.model.flow.values()]),
-            [self.constraints['gw']]
-        ]
+        return (
+            self.model.nd_flow, [self.constraints['gw']]
+        )
 
     def objectivefunction(self, simulation, evaluation):
         # select the series subset that have observations (i.e. not NaN)
@@ -188,22 +182,16 @@ class MonteCarlo(object):
 
         # calculate the objective functions
         obj1 = spotpy.objectivefunctions.nashsutcliffe(evaluation=flow_eval, simulation=flow_simu)
-        obj2 = spotpy.objectivefunctions.lognashsutcliffe(evaluation=flow_eval, simulation=flow_simu)
-        obj3 = sqrt_nash_sutcliffe(evaluation=flow_eval, simulation=flow_simu)
-        obj4 = bounded_nash_sutcliffe(evaluation=flow_eval, simulation=flow_simu)
-        obj5, obj5c, obj5a, obj5b = \
+        obj2, obj2c, obj2a, obj2b = \
             spotpy.objectivefunctions.kge(evaluation=flow_eval, simulation=flow_simu, return_all=True)
-        obj6 = spotpy.objectivefunctions.bias(evaluation=flow_eval, simulation=flow_simu)
-        obj7 = spotpy.objectivefunctions.pbias(evaluation=flow_eval, simulation=flow_simu)
-        obj8 = spotpy.objectivefunctions.rmse(evaluation=flow_eval, simulation=flow_simu)
-        obj9 = spearman_rank_corr(evaluation=flow_eval, simulation=flow_simu)
-        obj10 = mean_abs_rel_error(evaluation=flow_eval, simulation=flow_simu)
-        obj11 = groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])
+        obj3 = spotpy.objectivefunctions.pbias(evaluation=flow_eval, simulation=flow_simu)
+        obj4 = spotpy.objectivefunctions.rmse(evaluation=flow_eval, simulation=flow_simu)
 
-        if self.constraints['gw'] == -999.0:
-            return [obj1, obj2, obj3, obj4, obj5, obj5c, obj5a, obj5b, obj6, obj7, obj8, obj9, obj10]
+        if self.constraints['gw']:
+            return [obj1, obj2, obj2c, obj2a, obj2b, obj3, obj4,
+                    groundwater_constraint(evaluation=evaluation[1], simulation=simulation[1])]
         else:
-            return [obj1, obj2, obj3, obj4, obj5, obj5c, obj5a, obj5b, obj6, obj7, obj8, obj9, obj10, obj11]
+            return [obj1, obj2, obj2c, obj2a, obj2b, obj3, obj4]
 
     def save(self, obj_fns, parameters, simulations, *args, **kwargs):
         if self.out_format == 'netcdf':
@@ -221,7 +209,7 @@ class MonteCarlo(object):
                 self.database.variables['Simulations'][index, my_s:my_e] = simulations[0]
         else:
             if self.save_sim:  # create a list of objectives functions + parameters + discharge series
-                line = map(np.float32, obj_fns + parameters.tolist() + simulations[0])
+                line = map(np.float32, obj_fns + parameters.tolist() + simulations[0].tolist())
             else:  # create a list of objectives functions + parameters
                 line = map(np.float32, obj_fns + parameters.tolist())
                 # write data in file

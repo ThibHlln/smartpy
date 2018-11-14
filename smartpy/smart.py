@@ -20,12 +20,11 @@
 
 from os import path, makedirs, sep
 import numpy as np
-from builtins import dict
 
 from .timeframe import TimeFrame
 from .parameters import Parameters
 from .inout import \
-    get_dict_rain_series_simu, get_dict_peva_series_simu, get_dict_discharge_series, write_flow_file_from_dict
+    get_dict_rain_series_simu, get_dict_peva_series_simu, get_dict_discharge_series, write_flow_file_from_nds
 from .structure import run
 
 
@@ -54,62 +53,64 @@ class SMART(object):
         self.timeseries = self.timeframe.get_series_simu()
         self.timeseries_report = self.timeframe.get_series_save()
         self.warm_up = warm_up_days
-        # physical information
+        # physical information as dictionaries
         extra_ext = '.nc' if self.in_fmt == 'netcdf' else ''
         self.rain = get_dict_rain_series_simu(''.join([self.in_f, self.catchment, '.rain' + extra_ext]), self.in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
         self.peva = get_dict_peva_series_simu(''.join([self.in_f, self.catchment, '.peva' + extra_ext]), self.in_fmt,
                                               self.timeseries[1], self.timeseries[-1], self.delta_simu)
-        if gauged_area_m2:
-            self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow' + extra_ext]),
-                                                  self.in_fmt,
-                                                  self.timeframe.get_series_save()[1],
-                                                  self.timeframe.get_series_save()[-1],
-                                                  catchment_area_m2, gauged_area_m2)
-        else:
-            self.flow = None
+        self.flow = get_dict_discharge_series(''.join([self.in_f, self.catchment, '.flow' + extra_ext]),
+                                              self.in_fmt,
+                                              self.timeframe.get_series_save()[1],
+                                              self.timeframe.get_series_save()[-1],
+                                              catchment_area_m2, gauged_area_m2) if gauged_area_m2 else None
+        # physical information as numpy arrays
+        self.nd_rain = np.array([self.rain[dt] for dt in self.timeseries[1:]])
+        self.nd_peva = np.array([self.peva[dt] for dt in self.timeseries[1:]])
+        self.nd_flow = np.array([self.flow[dt] for dt in self.timeseries_report[1:]]) if gauged_area_m2 else None
         # optional extra information for setting up initial levels in reservoirs
         self.extra = None
         # parameters
         self.parameters = Parameters()
         # model outputs
         self.outputs = None
-        self.discharge = None
+        self.nd_discharge = None
         self.gw_contribution = None
 
-    def simulate(self, param):
-        db = dict()
-        self.outputs = run(self.area, self.delta_simu, self.rain, self.peva,
-                           param, self.extra, db, self.timeseries, self.timeseries_report,
-                           warm_up=self.warm_up)
-        self.discharge = self.outputs[0]
+    def simulate(self, param, report='summary'):
+        nd_parameters = np.array([param[name] for name in self.parameters.names])
+        self.outputs = run(self.area, self.delta_simu, self.nd_rain, self.nd_peva,
+                           nd_parameters, self.extra, self.timeseries, self.timeseries_report,
+                           report=report, warm_up=self.warm_up)
+        self.nd_discharge = self.outputs[0]
         self.gw_contribution = self.outputs[1]
         return self.outputs
 
     def write_output_files(self, which='both', parallel=False):
         if (which == 'both') or (which == 'modelled'):
             if self.outputs:
-                write_flow_file_from_dict(self.timeframe, self.discharge,
-                                          ''.join([self.out_f, self.catchment, '.mod.flow']),
-                                          out_file_format=self.out_fmt,
-                                          method='raw', parallel=parallel)
+                write_flow_file_from_nds(self.timeseries_report[1:], self.nd_discharge,
+                                         ''.join([self.out_f, self.catchment, '.mod.flow']),
+                                         out_file_format=self.out_fmt, parallel=parallel)
             else:
                 raise Exception("The output files cannot be written because the outputs attribute is unassigned. "
                                 "Please make sure to call the simulate method before writing the output files.")
 
         if (which == 'both') or (which == 'observed'):
             if self.flow:
-                write_flow_file_from_dict(self.timeframe, self.flow,
-                                          ''.join([self.out_f, self.catchment, '.obs.flow']),
-                                          out_file_format=self.out_fmt,
-                                          method='raw', parallel=parallel)
+                write_flow_file_from_nds(self.timeseries_report[1:], self.nd_flow,
+                                         ''.join([self.out_f, self.catchment, '.obs.flow']),
+                                         out_file_format=self.out_fmt, parallel=parallel)
 
     def get_simulation_array(self):
         if self.outputs:
-            return np.asarray([self.discharge[dt] for dt in self.flow])
+            return self.nd_discharge
         else:
             raise Exception("The simulation array cannot be provided because the outputs attribute is unassigned."
                             "Please make sure to call the simulate method before requesting the simulation array.")
 
     def get_evaluation_array(self):
-        return np.asarray([val for val in self.flow.values()])
+        if self.nd_flow:
+            return self.nd_flow
+        else:
+            raise Exception("The observation array does not exist.")
