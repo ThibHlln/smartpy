@@ -19,4 +19,4 @@
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = '0.1.4-2'
+__version__ = '0.2.0'
