@@ -56,123 +56,140 @@ def run(area_m2, delta,
 
     # determine whether SMARTcpp (C++ extension of SMART for Python) can be used or not
     if smart_in_cpp:
-        one_step = smartcpp.onestep
+        try:  # all steps is available for SMARTcpp version >= 0.2.0
+            all_steps = smartcpp.allsteps
+        except AttributeError:  # i.e. SMARTcpp version < 0.2.0 (will try again with one step)
+            all_steps = run_all_steps
     else:
-        one_step = run_one_step
+        all_steps = run_all_steps
+
+    # convert report to report type as an integer
+    if report == 'summary':
+        report_type = 1
+    elif report == 'raw':
+        report_type = 2
+    else:
+        raise Exception('Reporting type \'{}\' unknown.'.format(report))
 
     # determine temporal information
-    simu_length = len(timeseries)
+    simu_length = len(timeseries) - 1
     delta_sec = delta.total_seconds()
     report_gap = (len(timeseries) - 1) // (len(timeseries_report) - 1)
 
     # set up the data structures
+    model_outputs = ['Q_aeva', 'Q_ove', 'Q_dra', 'Q_int', 'Q_sgw', 'Q_dgw', 'Q_out']
     model_states = ['V_ove', 'V_dra', 'V_int', 'V_sgw', 'V_dgw',
                     'V_ly1', 'V_ly2', 'V_ly3', 'V_ly4', 'V_ly5', 'V_ly6',
                     'V_river']
-    model_outputs = ['Q_aeva', 'Q_ove', 'Q_dra', 'Q_int', 'Q_sgw', 'Q_dgw', 'Q_out']
     model_variables = model_outputs + model_states
 
-    nd_storage = np.zeros((len(timeseries), len(model_variables)), dtype=np.float64)
+    nd_initial = np.zeros((len(model_variables),), dtype=np.float64)
 
     # set initial conditions
     if kwargs['warm_up'] != 0:  # either using warm-up run
-        warm_up_length = int(kwargs['warm_up'] * 86400 / delta.total_seconds()) + 1
+        warm_up_length = int(kwargs['warm_up'] * 86400 / delta.total_seconds())
 
-        nd_storage_wu = np.zeros((warm_up_length, len(model_variables)), dtype=np.float64)
+        nd_initial_wu = np.zeros((len(model_variables),), dtype=np.float64)
 
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 60/30/10% GW/Soil/Surface)
         if extra:
-            nd_storage_wu[0, model_variables.index('V_ove')] = \
+            nd_initial_wu[model_variables.index('V_ove')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] / 1000 * area_m2 / 8766 * nd_parameters[6]
-            nd_storage_wu[0, model_variables.index('V_dra')] = \
+            nd_initial_wu[model_variables.index('V_dra')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[7]
-            nd_storage_wu[0, model_variables.index('V_int')] = \
+            nd_initial_wu[model_variables.index('V_int')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] / 1000 * area_m2 / 8766 * nd_parameters[7]
-            nd_storage_wu[0, model_variables.index('V_sgw')] = \
+            nd_initial_wu[model_variables.index('V_sgw')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] / 1000 * area_m2 / 8766 * nd_parameters[8]
-            nd_storage_wu[0, model_variables.index('V_dgw')] = \
+            nd_initial_wu[model_variables.index('V_dgw')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] / 1000 * area_m2 / 8766 * nd_parameters[8]
-            nd_storage_wu[0, model_variables.index('V_river')] = \
+            nd_initial_wu[model_variables.index('V_river')] = \
                 (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * nd_parameters[9]
 
         # start with soil layers half full (six soil layers so half gives /12)
-        nd_storage_wu[0, model_variables.index('V_ly1'):(model_variables.index('V_ly6') + 1)] = \
+        nd_initial_wu[model_variables.index('V_ly1'):(model_variables.index('V_ly6') + 1)] = \
             (nd_parameters[5] / 12) / 1000 * area_m2
 
-        run_all_steps(one_step,
-                      area_m2, delta_sec, warm_up_length,
-                      nd_rain, nd_peva,
-                      nd_parameters, nd_storage_wu,
-                      report, report_gap)
+        nd_initial[:] = all_steps(area_m2, delta_sec, warm_up_length,
+                                  nd_rain, nd_peva,
+                                  nd_parameters, nd_initial_wu,
+                                  report_type, report_gap)[2]
 
-        nd_storage[0, :] = nd_storage_wu[-1, :]
     else:  # or starting without warm-up run
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 10/30/60% Surface/Soil/GW)
         if extra:
-            nd_storage[0, model_variables.index('V_ove')] = \
+            nd_initial[model_variables.index('V_ove')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] / 1000 * area_m2 / 8766 * nd_parameters[6]
-            nd_storage[0, model_variables.index('V_dra')] = \
+            nd_initial[model_variables.index('V_dra')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[7]
-            nd_storage[0, model_variables.index('V_int')] = \
+            nd_initial[model_variables.index('V_int')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] / 1000 * area_m2 / 8766 * nd_parameters[7]
-            nd_storage[0, model_variables.index('V_sgw')] = \
+            nd_initial[model_variables.index('V_sgw')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] / 1000 * area_m2 / 8766 * nd_parameters[7]
-            nd_storage[0, model_variables.index('V_dgw')] = \
+            nd_initial[model_variables.index('V_dgw')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] / 1000 * area_m2 / 8766 * nd_parameters[8]
-            nd_storage[0, model_variables.index('V_river')] = \
+            nd_initial[model_variables.index('V_river')] = \
                 (extra['aar'] * extra['r-o_ratio']) / 1000 * area_m2 / 8766 * nd_parameters[9]
         # start with soil layers half full (six soil layers so half gives /12)
-        nd_storage[0, model_variables.index('V_ly1'):(model_variables.index('V_ly6') + 1)] = \
+        nd_initial[model_variables.index('V_ly1'):(model_variables.index('V_ly6') + 1)] = \
             (nd_parameters[5] / 12) / 1000 * area_m2
 
     # run the actual simulation
-    return run_all_steps(one_step,
-                         area_m2, delta_sec, simu_length,
-                         nd_rain, nd_peva,
-                         nd_parameters, nd_storage,
-                         report, report_gap)
+    return all_steps(area_m2, delta_sec, simu_length,
+                     nd_rain, nd_peva,
+                     nd_parameters, nd_initial,
+                     report_type, report_gap)[0:2]
 
 
-def run_all_steps(smart_one_step,
-                  area_m2, delta_sec, length_simu,
+def run_all_steps(area_m2, delta_sec, length_simu,
                   nd_rain, nd_peva,
-                  nd_parameters, nd_storage,
-                  report, report_gap):
+                  nd_parameters, nd_initial,
+                  report_type, report_gap):
     """
     This function calls the hydrological model (run_one_step) for all the time steps in the period in sequence.
     It returns the simulated discharge at the outlet for the simulation period, as well as the proportion of runoff
     contributed by the two groundwater pathways.
 
-    :param smart_one_step: reference to function to run one simulation step
     :param area_m2: catchment area in square meters
     :param delta_sec: duration between two simulations time steps in seconds
     :param length_simu: number of simulation time steps (including initial step)
     :param nd_rain: numpy array containing the rainfall series
     :param nd_peva: numpy array containing the potential evapotranspiration series
     :param nd_parameters: numpy array containing the parameter values
-    :param nd_storage: numpy array containing outputs and states (axis 1) for each simulation time step (axis 0)
-    :param report: reporting type (either 'summary' or 'raw')
+    :param nd_initial: numpy array containing outputs and states (axis 1) for each simulation time step (axis 0)
+    :param report_type: reporting type (either 1 for 'summary' or 2 for 'raw')
     :param report_gap: number of simulation time steps contained in one reporting time step
     :return: numpy array for discharge series and scalar for groundwater component to runoff
     """
-    for i in range(1, length_simu):
-        nd_storage[i, :] = smart_one_step(area_m2, delta_sec,
-                                          nd_rain[i - 1], nd_peva[i - 1],
-                                          nd_parameters[0], nd_parameters[1], nd_parameters[2], nd_parameters[3],
-                                          nd_parameters[4], nd_parameters[5], nd_parameters[6], nd_parameters[7],
-                                          nd_parameters[8], nd_parameters[9],
-                                          *nd_storage[i - 1, 7:])
 
-    if report == 'summary':
-        discharge = np.mean(np.reshape(nd_storage[1:, 6], (-1, report_gap)), axis=-1)
-    elif report == 'raw':
-        discharge = nd_storage[1:, 6][::-report_gap][::-1]
+    # determine whether SMARTcpp (C++ extension of SMART for Python) can be used or not
+    if smart_in_cpp:  # i.e. SMARTcpp version < 0.2.0 (because SMARTcpp did not have all steps)
+        one_step = smartcpp.onestep
     else:
-        raise Exception('Reporting type \'{}\' unknown.'.format(report))
+        one_step = run_one_step
 
-    groundwater_component = np.sum(nd_storage[1:, [4, 5]]) / np.sum(nd_storage[1:, [1, 2, 3, 4, 5]])
+    # create a local data structure to store simulations
+    nd_storage = np.zeros((length_simu + 1, nd_initial.shape[0],), dtype=np.float64)
+    # assign initial conditions into storage array
+    nd_storage[0, :] = nd_initial[:]
+    # run simulations for each time step
+    for i in range(1, length_simu + 1):
+        nd_storage[i, :] = one_step(area_m2, delta_sec,
+                                    nd_rain[i - 1], nd_peva[i - 1],
+                                    nd_parameters[0], nd_parameters[1], nd_parameters[2], nd_parameters[3],
+                                    nd_parameters[4], nd_parameters[5], nd_parameters[6], nd_parameters[7],
+                                    nd_parameters[8], nd_parameters[9],
+                                    *nd_storage[i - 1, 7:])
+    # extract the reporting information from the simulations
+    if report_type == 1:  # summary of the simulation steps corresponding to one reporting step
+        discharge = np.mean(np.reshape(nd_storage[1:, 6], (-1, report_gap)), axis=-1)
+        groundwater_component = np.sum(nd_storage[1:, [4, 5]]) / np.sum(nd_storage[1:, [1, 2, 3, 4, 5]])
+    else:  # raw extraction of the value corresponding to the reporting datetime
+        discharge = nd_storage[1:, 6][::-report_gap][::-1]
+        groundwater_component = np.sum(nd_storage[1:, [4, 5]][::-report_gap, :][::-1, :]) / \
+            np.sum(nd_storage[1:, [1, 2, 3, 4, 5]][::-report_gap, :][::-1, :])
 
-    return discharge, groundwater_component
+    return discharge, groundwater_component, nd_storage[-1]
 
 
 def run_one_step(area_m2, time_delta_sec,
