@@ -93,7 +93,7 @@ If Monte Carlo simulations are required, it is important to make use of the avai
 
 ## Version History
 
-* 0.2.0 [16 Nov 2018]: [Speed improvement by making use of new version of SMARTcpp](https://github.com/ThibHlln/smartpy/releases/tag/v2.0.0)
+* 0.2.0 [16 Nov 2018]: [Speed improvement by making use of new version of SMARTcpp](https://github.com/ThibHlln/smartpy/releases/tag/v0.2.0)
 * 0.1.4 [12 Nov 2018]: [General enhancements](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.4)
 * 0.1.3 [24 Jul 2018]: [Version improved for Monte Carlo simulations with parallel computing](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.3)
 * 0.1.2 [18 Jul 2018]: [Version functioning without evaluation data](https://github.com/ThibHlln/smartpy/releases/tag/v0.1.2)
