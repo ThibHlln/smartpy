@@ -152,7 +152,7 @@ def run_all_steps(area_m2, delta_sec, length_simu,
 
     :param area_m2: catchment area in square meters
     :param delta_sec: duration between two simulations time steps in seconds
-    :param length_simu: number of simulation time steps (including initial step)
+    :param length_simu: number of simulation time steps (excluding initial step)
     :param nd_rain: numpy array containing the rainfall series
     :param nd_peva: numpy array containing the potential evapotranspiration series
     :param nd_parameters: numpy array containing the parameter values
