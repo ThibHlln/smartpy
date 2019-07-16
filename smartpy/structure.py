@@ -88,7 +88,14 @@ def run(area_m2, delta,
     # set initial conditions
     if kwargs['warm_up'] != 0:  # either using warm-up run
         warm_up_length = int(kwargs['warm_up'] * 86400 / delta.total_seconds())
-
+        
+        if warm_up_length > simu_length:
+            raise Exception("The warm-up duration (i.e. {} days) cannot exceed the length of the simulation period "
+                            "because the beginning of the simulation period is used as made-up warm-up data for the "
+                            "sake of model states initialisation. Please specify another warm-up duration to comply "
+                            "with this requirement, or consider using actual warm-up data at the beginning of the "
+                            "simulation period and set the warm-up period to 0.".format(kwargs['warm_up']))
+            
         nd_initial_wu = np.zeros((len(model_variables),), dtype=np.float64)
 
         # start with non-empty linear reservoirs (1200mm/yr SAAR & 45% becomes runoff, split 60/30/10% GW/Soil/Surface)
