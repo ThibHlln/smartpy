@@ -103,14 +103,14 @@ class SMART(object):
                                          out_file_format=self.out_fmt, parallel=parallel)
 
     def get_simulation_array(self):
-        if self.outputs:
+        if self.nd_discharge is not None:
             return self.nd_discharge
         else:
             raise Exception("The simulation array cannot be provided because the outputs attribute is unassigned."
                             "Please make sure to call the simulate method before requesting the simulation array.")
 
     def get_evaluation_array(self):
-        if self.nd_flow:
+        if self.nd_flow is not None:
             return self.nd_flow
         else:
             raise Exception("The observation array does not exist.")
