@@ -28,7 +28,8 @@ A tutorial in the form of a [Jupyter notebook](examples/api_usage_example.ipynb)
 
 ## How to Cite
 
-If you are using SMARTpy, please consider citing the software using the DOI provided in the header of this file.
+If you are using SMARTpy, please consider citing the software as follows (click on the link to get the DOI of a specific version):
+* Hallouin, T., Mockler, E., Bruen, M. (XXXX). SMARTpy: Conceptual Rainfall-Runoff Model (Version X.X.X). Zenodo. https://doi.org/10.5281/zenodo.2564041
 
 ## Dependencies
 
