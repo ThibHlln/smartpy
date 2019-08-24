@@ -93,24 +93,28 @@ class SMART(object):
                                          ''.join([self.out_f, self.catchment, '.mod.flow']),
                                          out_file_format=self.out_fmt, parallel=parallel)
             else:
-                raise Exception("The modelled flow file cannot be written because the outputs attribute is unassigned. "
-                                "Please make sure to call the simulate method before writing the output files.")
+                raise Exception("The modelled flow output file cannot be written. Please make sure to call the "
+                                "simulate method of your SMART instance before writing this output file.")
 
         if (which == 'both') or (which == 'observed'):
             if self.nd_flow is not None:
                 write_flow_file_from_nds(self.timeseries_report[1:], self.nd_flow,
                                          ''.join([self.out_f, self.catchment, '.obs.flow']),
                                          out_file_format=self.out_fmt, parallel=parallel)
+            else:
+                raise Exception("The observed flow output file cannot be written. Please make sure that a value is "
+                                "assigned to the gauged_area_m2 attribute of the SMART class instance.")
 
     def get_simulation_array(self):
         if self.nd_discharge is not None:
             return self.nd_discharge
         else:
-            raise Exception("The simulation array cannot be provided because the outputs attribute is unassigned."
-                            "Please make sure to call the simulate method before requesting the simulation array.")
+            raise Exception("The simulation array cannot be retrieved. Please make sure to call the simulate "
+                            "method of your SMART instance before requesting this output array.")
 
     def get_evaluation_array(self):
         if self.nd_flow is not None:
             return self.nd_flow
         else:
-            raise Exception("The observation array does not exist.")
+            raise Exception("The observation array does not exist. Please make sure that a value is assigned "
+                            "to the gauged_area_m2 attribute of your SMART class instance.")
