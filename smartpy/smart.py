@@ -88,16 +88,16 @@ class SMART(object):
 
     def write_output_files(self, which='both', parallel=False):
         if (which == 'both') or (which == 'modelled'):
-            if self.outputs:
+            if self.nd_discharge is not None:
                 write_flow_file_from_nds(self.timeseries_report[1:], self.nd_discharge,
                                          ''.join([self.out_f, self.catchment, '.mod.flow']),
                                          out_file_format=self.out_fmt, parallel=parallel)
             else:
-                raise Exception("The output files cannot be written because the outputs attribute is unassigned. "
+                raise Exception("The modelled flow file cannot be written because the outputs attribute is unassigned. "
                                 "Please make sure to call the simulate method before writing the output files.")
 
         if (which == 'both') or (which == 'observed'):
-            if self.flow:
+            if self.nd_flow is not None:
                 write_flow_file_from_nds(self.timeseries_report[1:], self.nd_flow,
                                          ''.join([self.out_f, self.catchment, '.obs.flow']),
                                          out_file_format=self.out_fmt, parallel=parallel)
