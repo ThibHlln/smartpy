@@ -77,8 +77,8 @@ def get_dict_peva_series_simu(file_location, file_format, start_simu, end_simu, 
         time_delta_res = get_required_resolution(start_data, start_simu, time_delta_data, time_delta_simu)
         return rescale_time_resolution_of_regular_cumulative_data(dict_peva,
                                                                   start_data, end_data, time_delta_data,
-                                                                  time_delta_simu,
-                                                                  start_simu, end_simu, time_delta_res)
+                                                                  time_delta_res,
+                                                                  start_simu, end_simu, time_delta_simu)
     else:
         raise Exception('PEva data not sufficient for simulation.')
 
