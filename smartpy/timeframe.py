@@ -50,15 +50,15 @@ class TimeFrame(object):
     Instead, the user is expected to adapt their simulation gap to match the required reporting gap.
     """
     def __init__(self, dt_save_start, dt_save_end,
-                 simu_increment_in_minutes, save_increment_in_minutes):
+                 simu_increment, save_increment):
 
         # Time Attributed for Output Data (Save/Write in Files)
         self.save_start = dt_save_start  # DateTime
-        self.save_end = dt_save_end  # DateTime
-        self.save_gap = save_increment_in_minutes  # Int [minutes]
+        self.save_gap = save_increment  # TimeDelta
+        self.save_end = self._check_save_end(dt_save_end)  # DateTime
 
         # Time Attributes for Simulation (Internal to the Simulator)
-        self.simu_gap = simu_increment_in_minutes  # Int [minutes]
+        self.simu_gap = simu_increment  # TimeDelta
         self.simu_start, self.simu_end = \
             TimeFrame._get_simu_start_end_given_save_start_end(self)  # DateTime, DateTime
 
@@ -66,11 +66,24 @@ class TimeFrame(object):
         self.save_series = TimeFrame._get_list_save_dt_with_initial_conditions(self)
         self.simu_series = TimeFrame._get_list_simu_dt_with_initial_conditions(self)
 
-    def _get_simu_start_end_given_save_start_end(self):
+    def _check_save_end(self, save_end):
         # check whether saving/reporting period makes sense on its own
-        if not self.save_start <= self.save_end:
+        if not self.save_start <= save_end:
             raise Exception("Save Start is greater than Save End.")
 
+        # determine whether the save_end is coherent with save_start and save_gap
+        (divisor, remainder) = divmod(int((save_end - self.save_start).total_seconds()),
+                                      int(self.save_gap.total_seconds()))
+
+        if remainder != 0:
+            save_end = self.save_start + timedelta(seconds=self.save_gap.total_seconds()) * divisor
+            raise Exception("The combination of (start, end) datetimes and the saving time delta "
+                            "are not compatible. For a start at {}, and a time delta of {}, the "
+                            "latest end in the period is {}".format(self.save_start, self.save_gap, save_end))
+        else:
+            return save_end
+
+    def _get_simu_start_end_given_save_start_end(self):
         # check whether the simulation time gap will allow to report on the saving/reporting time gap
         if not self.save_gap.total_seconds() % self.simu_gap.total_seconds() == 0:
             raise Exception("Save Gap is not greater and a multiple of Simulation Gap.")
