@@ -330,7 +330,7 @@ def write_flow_netcdf_file_from_nds(series_report, discharge, netcdf_file, paral
         my_file.createVariable('flow', np.float32, ('DateTime',))
 
         my_file.variables['DateTime'][0:len(series_report)] = \
-            (np.asarray(series_report, dtype='datetime64[us]') - np.datetime64('1970-01-01T00:00:00Z')) / \
+            (np.asarray(series_report, dtype='datetime64[us]') - np.datetime64('1970-01-01T00:00:00')) / \
             np.timedelta64(1, 's')
         my_file.variables['flow'][0:len(series_report)] = discharge
 

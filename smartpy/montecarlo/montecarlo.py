@@ -116,7 +116,7 @@ class MonteCarlo(object):
                     simu.units = "Discharge in m3/s"
                     # write simulation datetime series as Unix timestamp series
                     datetimes = [np.datetime64(dt) for dt in self.model.flow]
-                    timestamps = (datetimes - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+                    timestamps = (datetimes - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's')
                     self.database.variables['DateTime'][0:len(datetimes)] = timestamps
             else:
                 raise Exception("The use of 'netcdf' as the output file format requires the package 'netCDF4', "
