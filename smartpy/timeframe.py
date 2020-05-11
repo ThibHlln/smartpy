@@ -19,7 +19,7 @@
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
 from builtins import range
-from fractions import gcd
+from math import gcd
 from datetime import datetime, timedelta
 import argparse
 from collections import OrderedDict
@@ -162,8 +162,8 @@ def get_required_resolution(start_data, start_simu, delta_data, delta_simu):
     # shift = start_data - start_simu gives the data shift (e.g. data starting at 8am, simu starting at 9am)
     # GCD(shift, GCD(delta_data, delta_simu)) gives the maximum time resolution to match both the difference in
     # start dates and the difference in data/simu time deltas.
-    return timedelta(seconds=gcd((start_data - start_simu).total_seconds(),
-                                 gcd(delta_data.total_seconds(), delta_simu.total_seconds())))
+    return timedelta(seconds=gcd(int((start_data - start_simu).total_seconds()),
+                                 gcd(int(delta_data.total_seconds()), int(delta_simu.total_seconds()))))
 
 
 def increase_time_resolution_of_regular_cumulative_data(dict_info, start_lo, end_lo,
