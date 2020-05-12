@@ -19,10 +19,14 @@
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
 from builtins import range
-from math import gcd
+import sys
 from datetime import datetime, timedelta
 import argparse
 from collections import OrderedDict
+if sys.version_info[0] < 3:
+    from fractions import gcd
+else:
+    from math import gcd
 
 
 class TimeFrame(object):
