@@ -52,7 +52,7 @@ setup(
     packages=['smartpy', 'smartpy.montecarlo', 'examples'],
 
     install_requires=[
-        'numpy',
+        'numpy>=1.16',
         'scipy',
         'future'
     ],
