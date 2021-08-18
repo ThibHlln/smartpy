@@ -103,7 +103,7 @@ def run(area_m2, delta,
             nd_initial_wu[model_variables.index('V_ove')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] / 1000 * area_m2 / 8766 * nd_parameters[6]
             nd_initial_wu[model_variables.index('V_dra')] = \
-                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[7]
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[6]
             nd_initial_wu[model_variables.index('V_int')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] / 1000 * area_m2 / 8766 * nd_parameters[7]
             nd_initial_wu[model_variables.index('V_sgw')] = \
@@ -128,11 +128,11 @@ def run(area_m2, delta,
             nd_initial[model_variables.index('V_ove')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][0] / 1000 * area_m2 / 8766 * nd_parameters[6]
             nd_initial[model_variables.index('V_dra')] = \
-                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[7]
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][1] / 1000 * area_m2 / 8766 * nd_parameters[6]
             nd_initial[model_variables.index('V_int')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][2] / 1000 * area_m2 / 8766 * nd_parameters[7]
             nd_initial[model_variables.index('V_sgw')] = \
-                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] / 1000 * area_m2 / 8766 * nd_parameters[7]
+                (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][3] / 1000 * area_m2 / 8766 * nd_parameters[8]
             nd_initial[model_variables.index('V_dgw')] = \
                 (extra['aar'] * extra['r-o_ratio']) * extra['r-o_split'][4] / 1000 * area_m2 / 8766 * nd_parameters[8]
             nd_initial[model_variables.index('V_river')] = \
