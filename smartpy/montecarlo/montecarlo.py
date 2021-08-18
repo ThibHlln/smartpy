@@ -135,7 +135,7 @@ class MonteCarlo(object):
         # initialise the database (either CSV file or NETCDF file)
         self._init_db()
         # run the Monte Carlo simulation
-        sampler = spotpy.algorithms.mc(self, parallel=self.parallel)
+        sampler = spotpy.algorithms.mc(self, dbformat='custom', parallel=self.parallel)
         sampler.sample(len(self.p_map))
         self.database.close()
         # if compression argument given, the file created will be compressed
