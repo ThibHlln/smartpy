@@ -12,6 +12,12 @@ Yet to be versioned and released. Only available from *dev* branch until then.
 * fix mistake in routing parameter used for "educated guess" as initial conditions
   (`5345b1d <https://github.com/ThibHlln/smartpy/commit/5345b1df012f23e883fe48130fa29f8e991353be>`_)
 
+.. rubric:: Documentation
+
+* add documentation build with `sphinx`
+  (`#3 <https://github.com/thibhlln/smartpy/pull/3>`_)
+
+
 v0.2.1
 ------
 
