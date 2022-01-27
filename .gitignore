@@ -50,3 +50,6 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# ignore documentation built because copied in docs/ root already
+docs/_doc_build
