@@ -1,0 +1,507 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monte Carlo experiment &#8212; smartpy latest documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet" />
+  <link href="../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="canonical" href="https://thibhlln.github.io/smartpy/tutorial/montecarlo_experiment.html" />
+    <link rel="shortcut icon" href="../_static/smartpy-favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API Reference" href="../api_reference.html" />
+    <link rel="prev" title="Single experiment" href="single_experiment.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+    <div id="navbar-start">
+      <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="navbar-brand" href="../index.html">
+              <img src="../_static/smartpy-logo.svg" class="logo" alt="logo">
+            </a>
+          </li>
+      </ul>
+    </div>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    
+    <div id="navbar-menu" class=" collapse navbar-collapse">
+      <ul class="navbar-nav mr-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              latest
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="version-menu">
+              
+                <a class="dropdown-item" href="https://thibhlln.github.io/smartpy">latest</a>
+              
+            </div>
+          </li>
+      </ul>
+
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../installation.html">
+  Installation
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="../tutorial.html">
+  Tutorial
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../api_reference.html">
+  API Reference
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../model_description.html">
+  Model Description
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../citation.html">
+  Citation
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../support.html">
+  Support
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../changelog.html">
+  Change Log
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../licence.html">
+  Licence
+ </a>
+</li>
+
+        
+      </ul>
+
+      <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/thibhlln/smartpy" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="single_experiment.html">
+   Single experiment
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Monte Carlo experiment
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#sampling">
+   Sampling
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#setting-up">
+     Setting up
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#adjusting-the-parameter-space">
+       Adjusting the parameter space
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#defining-the-initial-conditions">
+       Defining the initial conditions
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#simulating">
+     Simulating
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#simulating-in-serial">
+       Simulating in serial
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#simulating-in-parallel">
+       Simulating in parallel
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#outputs">
+       Outputs
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#conditioning">
+   Conditioning
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#id3">
+     Setting up
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id4">
+       Defining the initial conditions
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#id5">
+     Simulating
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id6">
+       Outputs
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="monte-carlo-experiment">
+<h1>Monte Carlo experiment<a class="headerlink" href="#monte-carlo-experiment" title="Permalink to this headline"><span class="fa fa-link"></a></h1>
+<p>The Monte Carlo experiment presented here consists of two steps: first the
+<a class="reference internal" href="#sampling"><span class="std std-ref">sampling</span></a> in the SMART model parameter space, then the
+<a class="reference internal" href="#conditioning"><span class="std std-ref">conditioning</span></a> of the sample to select those parameter
+sets deemed as satisfactorily reproducing the observed river discharge.</p>
+<p>In <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code>, the sampling generates at random a number of parameter sets
+that are used to run the SMART model on a given simulation period (the
+“calibration” period). The performance of the SMART model structure with
+each parameter set is assessed using one or more objective functions.
+These objective function values (and optionally the corresponding
+streamflow simulations) correspond to the sampling output.</p>
+<p>Then, in <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code>, the conditioning selects a subset of parameter sets
+from the sampling based on their objective functions values. This subset
+of parameter sets is then used to run the SMART model on another given
+simulation period (the “evaluation” period, necessarily independent from
+the sampling period). The performance of the SMART model with this subset
+of parameter sets is then assessed again using one or more objective
+functions (not necessarily the same ones as for the conditioning). These
+objective function values (and optionally the corresponding streamflow
+simulations) correspond to the conditioning output.</p>
+<div class="section" id="sampling">
+<span id="id1"></span><h2>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> only offers a Latin Hypercube approach (<a class="reference external" href="https:doi.org/10.1080/00401706.2000.10485979">McKay et al., 2000</a>) for sampling the SMART
+model parameter space.</p>
+<div class="section" id="setting-up">
+<h3>Setting up<a class="headerlink" href="#setting-up" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<p>The configuration of the sampling is done as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartpy</span> <span class="kn">import</span> <span class="n">montecarlo</span>
+
+<span class="n">lhs</span> <span class="o">=</span> <span class="n">montecarlo</span><span class="o">.</span><span class="n">LHS</span><span class="p">(</span>
+    <span class="n">catchment</span><span class="o">=</span><span class="s1">&#39;ExampleDaily&#39;</span><span class="p">,</span>
+    <span class="n">root_f</span><span class="o">=</span><span class="s1">&#39;examples/&#39;</span><span class="p">,</span>
+    <span class="n">in_format</span><span class="o">=</span><span class="s1">&#39;csv,</span>
+    <span class="n">out_format</span><span class="o">=</span><span class="s1">&#39;csv,</span>
+    <span class="n">sample_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_sim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">settings_filename</span><span class="o">=</span><span class="s1">&#39;ExampleDaily.sttngs&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The configuration of the SMART model itself, unlike for the single
+experiment, is done through a settings file. An example of such a
+settings file is available as a template in the <em>examples/</em> directory.</p>
+</div>
+<div class="section" id="adjusting-the-parameter-space">
+<h4>Adjusting the parameter space<a class="headerlink" href="#adjusting-the-parameter-space" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>The default model parameter ranges used to define the boundaries of the
+Latin hypercube are accessible as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">lhs</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ranges</span><span class="p">)</span>
+<span class="go">{&#39;T&#39;: (0.9, 1.1), &#39;C&#39;: (0.0, 1.0), &#39;H&#39;: (0.0, 0.3), &#39;D&#39;: (0.0, 1.0), &#39;S&#39;: (0.0, 0.013), &#39;Z&#39;: (15.0, 150.0), &#39;SK&#39;: (1.0, 240.0), &#39;FK&#39;: (48.0, 1440.0), &#39;GK&#39;: (1200.0, 4800.0), &#39;RK&#39;: (1.0, 96.0)}</span>
+</pre></div>
+</div>
+<p>And they can be adjusted by assigning a new dictionary to this attribute:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lhs</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">),</span>
+    <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+    <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+    <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+    <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.013</span><span class="p">),</span>
+    <span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">150.0</span><span class="p">),</span>
+    <span class="s1">&#39;SK&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">240.0</span><span class="p">),</span>
+    <span class="s1">&#39;FK&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">48.0</span><span class="p">,</span> <span class="mf">1440.0</span><span class="p">),</span>
+    <span class="s1">&#39;GK&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1200.0</span><span class="p">,</span> <span class="mf">4800.0</span><span class="p">),</span>
+    <span class="s1">&#39;RK&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">96.0</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="defining-the-initial-conditions">
+<h4>Defining the initial conditions<a class="headerlink" href="#defining-the-initial-conditions" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>Like in the single experiment example, the “educated guess” approach can be
+used as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lhs</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">extra</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;aar&#39;</span><span class="p">:</span> <span class="mi">1200</span><span class="p">,</span>
+    <span class="s1">&#39;r-o_ratio&#39;</span><span class="p">:</span> <span class="mf">0.45</span><span class="p">,</span>
+    <span class="s1">&#39;r-o_split&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Also, a warm up period can be chosen in the settings file where the model
+is configured.</p>
+</div>
+</div>
+<div class="section" id="simulating">
+<h3>Simulating<a class="headerlink" href="#simulating" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<div class="section" id="simulating-in-serial">
+<h4>Simulating in serial<a class="headerlink" href="#simulating-in-serial" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>Running the sampling in the parameter space sequentially (i.e. simulating
+with one parameter set at a time using one process) can be done as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lhs</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">compression</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="simulating-in-parallel">
+<h4>Simulating in parallel<a class="headerlink" href="#simulating-in-parallel" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>To start the sampling in parallel (i.e. simulating with multiple parameter
+sets at a time using multiple processes, the parameter <em>parallel</em> must be
+set as <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">True</span></code></a> in the set up step above, and all the steps presented above
+(including the <code class="xref py py-obj docutils literal notranslate"><span class="pre">lhs.run(...)</span></code>) must be saved in a Python script, say
+<em>lhs_sampling.py</em>. Then, this script must be executed via a <code class="xref py py-obj docutils literal notranslate"><span class="pre">mpirun</span></code>
+command as follows (e.g. using 4 processors to initialise 4 processes):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -np <span class="m">4</span> python lhs_sampling.py
+</pre></div>
+</div>
+</div>
+<div class="section" id="outputs">
+<h4>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>The sampling performed above will have produced an output file
+<em>{root_f}/out/{catchment}.SMART.lhs</em> (if <code class="xref py py-obj docutils literal notranslate"><span class="pre">'csv'</span></code> was chosen as the output
+format or <em>{root_f}/out/{catchment}.SMART.lhs.nc</em> (if <code class="xref py py-obj docutils literal notranslate"><span class="pre">'netcdf'</span></code> was
+chosen as the output format).</p>
+</div>
+</div>
+</div>
+<div class="section" id="conditioning">
+<span id="id2"></span><h2>Conditioning<a class="headerlink" href="#conditioning" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>A sampling output file is required to perform the conditioning step.</p>
+</div>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> offers three conditioning approaches which differ in the way
+the parameter sets are elicited as satisfactory:</p>
+<ul class="simple">
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">GLUE</span></code> is based on the selection of one or more objective functions
+and the a priori definition of conditions (i.e. thresholds) to achieve
+with the model simulation on each objective function to deem the
+parameter set as “behavioural”;</p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Best</span></code> is based on the selection of one target objective function
+and the a priori choice of the number of “best” performing parameter
+sets to retain;</p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Total</span></code> is not a conditioning approach per se, as it retains all
+parameter sets for the simulation on the “evaluation” period. This is
+provided as a convenient way to offer to the user the opportunity
+to perform their own conditioning approach a posteriori using the
+streamflow simulations on the “calibration” and the “evaluation” periods
+obtained from the sampling and conditioning steps, respectively.</p></li>
+</ul>
+<p>More information about these three approaches can be found in the
+<a class="reference internal" href="../api_reference.html"><span class="doc">API Reference</span></a>.</p>
+<p>The remainder of this tutorial is based on the <code class="xref py py-obj docutils literal notranslate"><span class="pre">Best</span></code> approach.</p>
+<div class="section" id="id3">
+<h3>Setting up<a class="headerlink" href="#id3" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<p>The configuration of the conditioning is done as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartpy</span> <span class="kn">import</span> <span class="n">montecarlo</span>
+
+<span class="n">montecarlo</span><span class="o">.</span><span class="n">Best</span><span class="p">(</span>
+    <span class="n">catchment</span><span class="o">=</span><span class="s1">&#39;ExampleDaily&#39;</span><span class="p">,</span>
+    <span class="n">root_f</span><span class="o">=</span><span class="s1">&#39;examples/&#39;</span><span class="p">,</span>
+    <span class="n">in_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+    <span class="n">out_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;KGE,</span>
+    <span class="n">nb_best</span><span class="o">=</span><span class="s1">&#39;2&#39;</span><span class="p">,</span>
+    <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_sim</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>For example, here the two best performing parameter sets amongst the
+ten sets sampled are selected based on their Kling-Gupta Efficiency (KGE)
+values.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The <em>catchment</em> and <em>root_f</em> must be the same between the sampling
+and the conditioning steps. In addition, the <em>out_format</em> of the
+sampling step must be the sme as the <em>in_format</em> of the conditioning
+step.</p>
+</div>
+<div class="section" id="id4">
+<h4>Defining the initial conditions<a class="headerlink" href="#id4" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>The initial conditions can be defined the same way they are in the
+sampling step above.</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>Simulating<a class="headerlink" href="#id5" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<p>The simulations can be performed the same way they are in the sampling
+step above.</p>
+<div class="section" id="id6">
+<h4>Outputs<a class="headerlink" href="#id6" title="Permalink to this headline"><span class="fa fa-link"></a></h4>
+<p>The conditioning performed above will have produced an output file
+<em>{root_f}/out/{catchment}.SMART.best</em> (if <code class="xref py py-obj docutils literal notranslate"><span class="pre">'csv'</span></code> was chosen as the output
+format or <em>{root_f}/out/{catchment}.SMART.best.nc</em> (if <code class="xref py py-obj docutils literal notranslate"><span class="pre">'netcdf'</span></code> was
+chosen as the output format).</p>
+</div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <div class="footer-item">
+      <p class="copyright">
+            &copy; Copyright 2018-2022, Thibault Hallouin.
+      </p>
+    </div>
+    <div class="footer-item">
+      <p class="sphinx-version">
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.
+        Last updated on Feb 02, 2022.<br>
+      </p>
+    </div>
+  </div>
+</footer>
+  </body>
+</html>

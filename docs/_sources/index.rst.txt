@@ -55,6 +55,7 @@ Ireland's Environmental Protection Agency (Grant Number 2014-W-LS-5).
 
    installation
    tutorial
+   api_reference
    model_description
    citation
    support
