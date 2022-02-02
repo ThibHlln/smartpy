@@ -16,6 +16,8 @@ Yet to be versioned and released. Only available from *dev* branch until then.
 
 * add documentation build with `sphinx`
   (`#3 <https://github.com/thibhlln/smartpy/pull/3>`_)
+* add API reference
+  (`89dc0b7 <https://github.com/ThibHlln/smartpy/commit/89dc0b781a017bd7a54568004a65894e2420a8e0>`_)
 
 
 v0.2.1
