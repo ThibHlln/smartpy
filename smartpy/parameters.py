@@ -25,7 +25,9 @@ from .inout import open_csv_rb
 
 class Parameters(object):
     def __init__(self):
+        #: Return the SMART model parameter names as a `list`.
         self.names = ['T', 'C', 'H', 'D', 'S', 'Z', 'SK', 'FK', 'GK', 'RK']
+        #: Return the typical SMART model parameter ranges as a `dict`.
         self.ranges = {
             'T': (0.9, 1.1),
             'C': (0.0, 1.0),
@@ -38,9 +40,22 @@ class Parameters(object):
             'GK': (1200.0, 4800.0),
             'RK': (1.0, 96.0)
         }
+        #: Return the set of SMART model parameter values as a `dict`.
         self.values = dict()
 
     def set_parameters_with_file(self, file_location):
+        """Assign the SMART model parameters values using a CSV file.
+
+        :Parameters:
+
+            file_location: `str`
+                The absolute file path for the parameters file.
+
+                *Parameter example:* ::
+
+                    file_location='examples/in/ExampleDaily/ExampleDaily.parameters'
+
+        """
         my_dict_par = dict()
         try:
             with open_csv_rb(file_location) as my_file:
@@ -63,6 +78,29 @@ class Parameters(object):
                                 "parameters file at {}.".format(param, file_location))
 
     def set_parameters_with_dict(self, dictionary):
+        """Assign the SMART model parameters values using a dictionary.
+
+        :Parameters:
+
+            dictionary: `dict`
+                The dictionary containing the parameter values.
+
+                *Parameter example:* ::
+
+                    dictionary={
+                        'T': 1.0,
+                        'C': 1.0,
+                        'H': 0.20845,
+                        'D': 0.24606,
+                        'S': 0.0001230,
+                        'Z': 105.26,
+                        'SK': 46.82,
+                        'FK': 315.55,
+                        'GK': 1066.73,
+                        'RK': 10.64
+                    }
+
+        """
         for param in self.names:
             try:
                 self.values[param] = dictionary[param]

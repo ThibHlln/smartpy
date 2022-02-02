@@ -132,6 +132,23 @@ class MonteCarlo(object):
         return spotpy.parameter.generate(self.params)
 
     def run(self, compression=None):
+        """Run the simulations for the sample of parameter sets.
+
+        :Parameters:
+
+            compression: `bool` or `int`
+                Whether the sample output file should be compressed.
+                If the output file format is `'csv'`, a `bool` is
+                expected (`True` if compression is requested). If the
+                output file format is `'netcdf'`, a `bool` or an `int`
+                is expected to determine the *complevel* of the Python
+                package `netCDF4` which ranges between 1 and 9 (if
+                `True`, set to compression level of 6, if `int` is
+                provided, the integer value is the *complevel*). If
+                not provided, set to default value `None` (i.e. no
+                compression is performed).
+
+        """
         # initialise the database (either CSV file or NETCDF file)
         self._init_db()
         # run the Monte Carlo simulation

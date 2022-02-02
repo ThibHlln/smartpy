@@ -27,8 +27,93 @@ from .montecarlo import MonteCarlo
 
 
 class Total(MonteCarlo):
+    """Total is the available to run an existing sample of parameter sets
+    on a different period, without any conditioning.
+
+    Note that a sampling must have already been performed prior to using
+    this functionality, and the unconditioned sample is then used to run
+    the model on a different simulation period than the sampling simulation
+    period.
+    """
     def __init__(self, catchment, root_f, in_format, out_format,
                  parallel='seq', save_sim=False, settings_filename=None, decompression_csv=False):
+        """**Instantiation**
+
+        :Parameters:
+
+            catchment: `str`
+                A name to identify the catchment of interest in the
+                inputs and outputs directories.
+
+            root_f: `str`
+                The file path to the directory containing the model
+                inputs and outputs. Note that a specific internal
+                structure for this directory must be followed:
+
+                .. code-block:: text
+
+                   root_f
+                   ├── in
+                   │   └── catchment
+                   │       ├── catchment.rain
+                   │       ├── catchment.peva
+                   │       ├── catchment.flow
+                   │       └── catchment.sttngs
+                   └── out
+
+            in_format: `str`
+                The input file format. It can either be `'csv'` or
+                `'netcdf'`. Note that in either case, a specific file
+                format must be followed.
+
+            out_format: `str`
+                The output file format. It can either be `'csv'` or
+                `'netcdf'`.
+
+            parallel: `str`, optional
+                Whether the sampling is to performed in parallel (i.e.
+                using MPI calls to run several simulations at the same
+                time), or in serial (i.e. running simulations sequentially
+                one after another). The options are:
+
+                ===============  =======================================
+                Parallel         Description
+                ===============  =======================================
+                `'seq'`          Run the simulations one after another.
+                `'mpi'`          Run several simulations at the same
+                                 time. The number of simultaneous
+                                 simulations is determined with the
+                                 number of processes using `mpirun -np`.
+                ===============  =======================================
+
+                If not provided, set to default value `'seq'`.
+
+            save_sim: `bool`, optional
+                Whether to save the simulated discharge time series. If
+                not provided, set to default value `False` (i.e. the
+                simulated values are not recorded). Note that the sampled
+                parameter values as well as a bundle of objective
+                functions are always recorded in the sampling output
+                file regardless of this argument.
+
+            settings_filename: `str`, optional
+                The name of the settings file to use to configure the
+                SMART model. This argument is to be used when the
+                settings file does not follow the specific file name
+                expected by the model, i.e. *{root_f}/in/{catchment}.sttngs*.
+                If not provided, set to the specific file name expected.
+                Note that regardless of this argument, the settings file
+                must be in the inputs folder for the given catchment
+                (in other words, absolute paths are not supported here).
+
+            decompression_csv: `bool`, optional
+                Whether the CSV files containing the sample of parameter
+                sets is compressed or not. If it is, this must be set to
+                `True` to decompress the CSV file as a pre-processing
+                step. If not provided, set to default vaalue `False` (i.e.
+                no decompression).
+
+        """
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
                             parallel=parallel, save_sim=save_sim, func='total', settings_filename=settings_filename)
 
