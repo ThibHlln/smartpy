@@ -172,6 +172,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="../methods/smartpy.SMART.write_output_files.html">
+     smartpy.SMART.write_output_files
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="../methods/smartpy.SMART.get_simulation_array.html">
      smartpy.SMART.get_simulation_array
     </a>
@@ -348,12 +353,15 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="smartpy.montecarlo.Total">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">smartpy.montecarlo.</span></span><span class="sig-name descname"><span class="pre">Total</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">catchment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_format</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_format</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'seq'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_sim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decompression_csv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartpy.montecarlo.Total" title="Permalink to this definition"><span class="fa fa-link"></a></dt>
-<dd><p>Total is the available to run an existing sample of parameter sets
+<dd><p>Total is available to run an existing sample of parameter sets
 on a different period, without any conditioning.</p>
-<p>Note that a sampling must have already been performed prior to using
-this functionality, and the unconditioned sample is then used to run
-the model on a different simulation period than the sampling simulation
-period.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>A sampling must have already been performed prior to using this
+functionality, and the unconditioned sample is then used to run
+the model on a different simulation period than the sampling
+simulation period.</p>
+</div>
 <p><strong>Instantiation</strong></p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -475,7 +483,7 @@ no decompression).</p>
     <div class="footer-item">
       <p class="sphinx-version">
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.
-        Last updated on Feb 02, 2022.<br>
+        Last updated on Feb 03, 2022.<br>
       </p>
     </div>
   </div>

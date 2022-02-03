@@ -55,6 +55,8 @@ The configuration of the sampling is done as follows:
        settings_filename='ExampleDaily.sttngs'
    )
 
+.. seealso:: `smartpy.montecarlo.LHS`
+
 .. note::
 
    The configuration of the SMART model itself, unlike for the single
@@ -122,6 +124,8 @@ with one parameter set at a time using one process) can be done as follows:
    lhs.run(compression=False)
 
 
+.. seealso:: `smartpy.montecarlo.LHS.run`
+
 Simulating in parallel
 ``````````````````````
 
@@ -170,8 +174,8 @@ the parameter sets are elicited as satisfactory:
   streamflow simulations on the "calibration" and the "evaluation" periods
   obtained from the sampling and conditioning steps, respectively.
 
-More information about these three approaches can be found in the
-:doc:`../api_reference`.
+.. seealso:: `smartpy.montecarlo.GLUE`, `smartpy.montecarlo.Best`,
+             `smartpy.montecarlo.Total`
 
 The remainder of this tutorial is based on the `Best` approach.
 

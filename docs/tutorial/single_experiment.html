@@ -291,6 +291,10 @@ the performance of the simulation.</p>
 <span class="p">)</span>
 </pre></div>
 </div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/classes/smartpy.SMART.html#smartpy.SMART" title="smartpy.SMART"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.SMART</span></code></a></p>
+</div>
 </div>
 <div class="section" id="giving-parameter-values-to-the-model-instance">
 <h3>Giving parameter values to the model instance<a class="headerlink" href="#giving-parameter-values-to-the-model-instance" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
@@ -320,6 +324,11 @@ directly provide them as a dictionary, as follows:</p>
     <span class="p">}</span>
 <span class="p">)</span>
 </pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/methods/smartpy.parameters.Parameters.set_parameters_with_file.html#smartpy.parameters.Parameters.set_parameters_with_file" title="smartpy.parameters.Parameters.set_parameters_with_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.parameters.Parameters.set_parameters_with_file</span></code></a>,
+<a class="reference internal" href="../api/methods/smartpy.parameters.Parameters.set_parameters_with_dict.html#smartpy.parameters.Parameters.set_parameters_with_dict" title="smartpy.parameters.Parameters.set_parameters_with_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.parameters.Parameters.set_parameters_with_dict</span></code></a></p>
 </div>
 </div>
 <div class="section" id="defining-the-initial-conditions">
@@ -380,6 +389,10 @@ instance attributes.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/methods/smartpy.SMART.simulate.html#smartpy.SMART.simulate" title="smartpy.SMART.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.SMART.simulate</span></code></a></p>
+</div>
 </div>
 <div class="section" id="retrieving-the-outputs">
 <h2>Retrieving the outputs<a class="headerlink" href="#retrieving-the-outputs" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
@@ -401,6 +414,10 @@ rescaled accordingly assuming proportionality.</p>
 be done using the following instruction:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">write_output_files</span><span class="p">(</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">)</span>
 </pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/methods/smartpy.SMART.write_output_files.html#smartpy.SMART.write_output_files" title="smartpy.SMART.write_output_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.SMART.write_output_files</span></code></a></p>
 </div>
 <p>The <em>which</em> argument can take the value ‘modelled’, ‘observed’, or ‘both’,
 to write the simulated streamflow series, the observed streamflow series,
@@ -477,7 +494,7 @@ simulation is low, e.g. with an NSE value is of 0.39.</p>
     <div class="footer-item">
       <p class="sphinx-version">
         Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.
-        Last updated on Feb 02, 2022.<br>
+        Last updated on Feb 03, 2022.<br>
       </p>
     </div>
   </div>

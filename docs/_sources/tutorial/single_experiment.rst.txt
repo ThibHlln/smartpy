@@ -46,6 +46,8 @@ the performance of the simulation.
        gauged_area_m2=175.97e6
    )
 
+.. seealso:: `smartpy.SMART`
+
 
 Giving parameter values to the model instance
 '''''''''''''''''''''''''''''''''''''''''''''
@@ -82,6 +84,9 @@ directly provide them as a dictionary, as follows:
            'RK': 10.64
        }
    )
+
+.. seealso:: `smartpy.parameters.Parameters.set_parameters_with_file`,
+             `smartpy.parameters.Parameters.set_parameters_with_dict`
 
 
 Defining the initial conditions
@@ -149,6 +154,8 @@ instance attributes.
 
    sm.simulate(sm.parameters.values)
 
+.. seealso:: `smartpy.SMART.simulate`
+
 
 Retrieving the outputs
 ----------------------
@@ -176,6 +183,7 @@ be done using the following instruction:
 
    sm.write_output_files(which='both')
 
+.. seealso:: `smartpy.SMART.write_output_files`
 
 The *which* argument can take the value 'modelled', 'observed', or 'both',
 to write the simulated streamflow series, the observed streamflow series,
@@ -218,7 +226,7 @@ suggested solution is as follows:
 
 Now that the arrays have no missing value, but still the same length,
 they can be compared using any objective function. A suggested approach
-is to use the `hydroeval` Python package (https://thibhlln.github.io/hydroeval)
+is to use the `hydroeval` Python package (`<https://thibhlln.github.io/hydroeval>`_)
 to get access to some of the most commonly used objective functions in hydrology:
 
 .. code-block:: python

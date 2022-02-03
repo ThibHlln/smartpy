@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>smartpy.montecarlo.Best.run &#8212; smartpy latest documentation</title>
+    <title>smartpy.SMART.write_output_files &#8212; smartpy latest documentation</title>
     
   <link href="../../_static/css/theme.css" rel="stylesheet" />
   <link href="../../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -34,12 +34,12 @@
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <link rel="canonical" href="https://thibhlln.github.io/smartpy/api/methods/smartpy.montecarlo.Best.run.html" />
+    <link rel="canonical" href="https://thibhlln.github.io/smartpy/api/methods/smartpy.SMART.write_output_files.html" />
     <link rel="shortcut icon" href="../../_static/smartpy-favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="GLUE" href="../classes/smartpy.montecarlo.GLUE.html" />
-    <link rel="prev" title="Best" href="../classes/smartpy.montecarlo.Best.html" />
+    <link rel="next" title="smartpy.SMART.get_simulation_array" href="smartpy.SMART.get_simulation_array.html" />
+    <link rel="prev" title="smartpy.SMART.simulate" href="smartpy.SMART.simulate.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="en" />
     
@@ -155,24 +155,24 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
   <div class="bd-toc-item active">
-    <ul class="nav bd-sidenav">
- <li class="toctree-l1 has-children">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../classes/smartpy.SMART.html">
    SMART
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul>
+  <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="smartpy.SMART.simulate.html">
      smartpy.SMART.simulate
     </a>
    </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="smartpy.SMART.write_output_files.html">
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
      smartpy.SMART.write_output_files
     </a>
    </li>
@@ -250,19 +250,19 @@
   </ul>
  </li>
 </ul>
-<ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active has-children">
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="../classes/smartpy.montecarlo.Best.html">
    Best
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+  <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
   <label for="toctree-checkbox-4">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul class="current">
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="smartpy.montecarlo.Best.run.html">
      smartpy.montecarlo.Best.run
     </a>
    </li>
@@ -338,25 +338,41 @@
               
               <div>
                 
-  <div class="section" id="smartpy-montecarlo-best-run">
-<h1>smartpy.montecarlo.Best.run<a class="headerlink" href="#smartpy-montecarlo-best-run" title="Permalink to this headline"><span class="fa fa-link"></a></h1>
+  <div class="section" id="smartpy-smart-write-output-files">
+<h1>smartpy.SMART.write_output_files<a class="headerlink" href="#smartpy-smart-write-output-files" title="Permalink to this headline"><span class="fa fa-link"></a></h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="smartpy.montecarlo.Best.run">
-<span class="sig-prename descclassname"><span class="pre">Best.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compression</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartpy.montecarlo.Best.run" title="Permalink to this definition"><span class="fa fa-link"></a></dt>
-<dd><p>Run the simulations for the sample of parameter sets.</p>
-<dl class="field-list simple">
+<dt class="sig sig-object py" id="smartpy.SMART.write_output_files">
+<span class="sig-prename descclassname"><span class="pre">SMART.</span></span><span class="sig-name descname"><span class="pre">write_output_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">which</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'both'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartpy.SMART.write_output_files" title="Permalink to this definition"><span class="fa fa-link"></a></dt>
+<dd><p>Record the discharge time series in output file(s).</p>
+<dl class="field-list">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>compression: <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a></dt><dd><p>Whether the sample output file should be compressed.
-If the output file format is <code class="xref py py-obj docutils literal notranslate"><span class="pre">'csv'</span></code>, a <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a> is
-expected (<a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">True</span></code></a> if compression is requested). If the
-output file format is <code class="xref py py-obj docutils literal notranslate"><span class="pre">'netcdf'</span></code>, a <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a> or an <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>
-is expected to determine the <em>complevel</em> of the Python
-package <code class="xref py py-obj docutils literal notranslate"><span class="pre">netCDF4</span></code> which ranges between 1 and 9 (if
-<a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">True</span></code></a>, set to compression level of 6, if <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a> is
-provided, the integer value is the <em>complevel</em>). If
-not provided, set to default value <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a> (i.e. no
-compression is performed).</p>
+<dd class="field-odd"><dl>
+<dt>which: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a></dt><dd><p>The discharge time series to record in output files.
+The options are:</p>
+<table class="table">
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 72%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">'modelled'</span></code></p></td>
+<td><p>Only record the simulated time series.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">'observed'</span></code></p></td>
+<td><p>Only record the observed time series.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">'both'</span></code></p></td>
+<td><p>Record the simulated and the observed
+time series.</p></td>
+</tr>
+</tbody>
+</table>
+<p>If not provided, set to default value <code class="xref py py-obj docutils literal notranslate"><span class="pre">'both</span></code>.</p>
+</dd>
+<dt>parallel: <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></a>, optional</dt><dd><p>Whether to open the output files with parallel I/O
+enabled. This option is only applicable for NetCDf
+output files. If not provided, set to default value
+<a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">False</span></code></a> (i.e. not enabling parallel I/O).</p>
 </dd>
 </dl>
 </dd>
