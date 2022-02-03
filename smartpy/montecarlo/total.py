@@ -27,13 +27,16 @@ from .montecarlo import MonteCarlo
 
 
 class Total(MonteCarlo):
-    """Total is the available to run an existing sample of parameter sets
+    """Total is available to run an existing sample of parameter sets
     on a different period, without any conditioning.
 
-    Note that a sampling must have already been performed prior to using
-    this functionality, and the unconditioned sample is then used to run
-    the model on a different simulation period than the sampling simulation
-    period.
+    .. important::
+
+       A sampling must have already been performed prior to using this
+       functionality, and the unconditioned sample is then used to run
+       the model on a different simulation period than the sampling
+       simulation period.
+
     """
     def __init__(self, catchment, root_f, in_format, out_format,
                  parallel='seq', save_sim=False, settings_filename=None, decompression_csv=False):
