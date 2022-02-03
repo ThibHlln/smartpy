@@ -16,6 +16,7 @@ Methods
    :template: method.rst
 
    ~smartpy.SMART.simulate
+   ~smartpy.SMART.write_output_files
    ~smartpy.SMART.get_simulation_array
    ~smartpy.SMART.get_evaluation_array
 
