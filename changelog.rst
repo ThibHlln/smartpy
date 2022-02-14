@@ -1,9 +1,16 @@
 .. default-role:: obj
 
-latest
+..
+   latest
+   ------
+
+   Yet to be versioned and released. Only available from *dev* branch until then.
+
+
+v0.2.2
 ------
 
-Yet to be versioned and released. Only available from *dev* branch until then.
+Released on 2022-02-14.
 
 .. rubric:: General
 
