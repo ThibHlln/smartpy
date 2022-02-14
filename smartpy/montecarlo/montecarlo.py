@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -37,7 +35,7 @@ except ImportError:
     Dataset = None
 
 from ..smart import SMART
-from ..inout import get_dict_simulation_settings, open_csv_rb, open_csv_wb
+from ..inout import get_dict_simulation_settings
 from ..objfunctions import groundwater_constraint
 from ..version import __version__
 
@@ -123,7 +121,7 @@ class MonteCarlo(object):
                                 "please install it and retry, or choose another file format.")
 
         else:  # fall back on to default option (CSV file)
-            self.database = open_csv_wb(self.db_file)
+            self.database = open(self.db_file, 'w', newline='', encoding='utf8')
             simu_steps = [dt.strftime('%Y-%m-%d %H:%M:%S') for dt in self.model.flow] if self.save_sim else []
             # write header in database file
             self.database.write(','.join(self.obj_fn_names + self.param_names + simu_steps) + '\n')
@@ -254,7 +252,7 @@ class MonteCarlo(object):
                         params.append([row[param] for param in param_names])
             # collect parameter values and objective function values from CSV
             else:
-                with open_csv_rb(file_location) as my_file:
+                with open(file_location, 'r', encoding='utf8') as my_file:
                     my_reader = DictReader(my_file)
                     obj_fns, params = list(), list()
                     for row in my_reader:

@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1), Eva Mockler (1,2), Michael Bruen (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1), Eva Mockler (1,2), Michael Bruen (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 # (2) Environmental Protection Agency, Ireland

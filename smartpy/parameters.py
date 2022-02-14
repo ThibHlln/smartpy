@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -19,8 +17,6 @@
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
 from csv import DictReader
-
-from .inout import open_csv_rb
 
 
 class Parameters(object):
@@ -58,7 +54,7 @@ class Parameters(object):
         """
         my_dict_par = dict()
         try:
-            with open_csv_rb(file_location) as my_file:
+            with open(file_location, 'r', encoding='utf8') as my_file:
                 my_reader = DictReader(my_file)
                 for row in my_reader:
                     if row['PAR_NAME'] in self.names:

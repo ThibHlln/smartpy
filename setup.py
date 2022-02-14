@@ -1,5 +1,5 @@
 # Copyright (C) 2018-2022  Thibault Hallouin
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open("README.rst", "r") as fh:
@@ -46,14 +46,12 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: CPython'
     ],
-    packages=['smartpy', 'smartpy.montecarlo', 'examples'],
+    packages=find_packages(exclude=["docs*"]),
     install_requires=requirements('requirements.txt'),
     extras_require={
         'with_netcdf': ['netCDF4'],

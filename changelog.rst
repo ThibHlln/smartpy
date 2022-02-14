@@ -5,6 +5,10 @@ latest
 
 Yet to be versioned and released. Only available from *dev* branch until then.
 
+.. rubric:: General
+
+* drop support for Python 2.7.x and Python < 3.7
+
 .. rubric:: Big fixes
 
 * fix bug in output writing for `montecarlo` due to change in behaviour in `spotpy`
@@ -18,6 +22,11 @@ Yet to be versioned and released. Only available from *dev* branch until then.
   (`#3 <https://github.com/thibhlln/smartpy/pull/3>`_)
 * add API reference
   (`89dc0b7 <https://github.com/ThibHlln/smartpy/commit/89dc0b781a017bd7a54568004a65894e2420a8e0>`_)
+
+.. rubric:: Tests
+
+* add GitHub workflow to run tests
+  (`#4 <https://github.com/thibhlln/smartpy/pull/4>`_)
 
 
 v0.2.1

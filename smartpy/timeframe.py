@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -19,14 +17,10 @@
 # along with SMARTpy. If not, see <http://www.gnu.org/licenses/>.
 
 from builtins import range
-import sys
 from datetime import datetime, timedelta
 import argparse
 from collections import OrderedDict
-if sys.version_info[0] < 3:
-    from fractions import gcd
-else:
-    from math import gcd
+from math import gcd
 
 
 class TimeFrame(object):
