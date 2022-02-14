@@ -7,7 +7,7 @@ Yet to be versioned and released. Only available from *dev* branch until then.
 
 .. rubric:: General
 
-* drop support for Python 2.7.x
+* drop support for Python 2.7.x and Python < 3.7
 
 .. rubric:: Big fixes
 
