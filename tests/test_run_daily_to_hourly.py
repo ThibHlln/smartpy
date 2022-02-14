@@ -8,7 +8,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
 
     def setUp(self):
         self.sm = smartpy.SMART(
-            catchment='ExampleDaily',
+            catchment='Catchment',
             catchment_area_m2=175.46 * 1E6,
             start=datetime.strptime('01/01/2007 09:00:00', '%d/%m/%Y %H:%M:%S'),
             end=datetime.strptime('31/12/2016 09:00:00', '%d/%m/%Y %H:%M:%S'),
@@ -17,7 +17,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
             warm_up_days=365,
             in_format='csv',
             out_format='csv',
-            root="examples/",
+            root="data/",
             gauged_area_m2=175.97 * 1E6
         )
 

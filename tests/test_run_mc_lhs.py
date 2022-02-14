@@ -6,8 +6,8 @@ class TestRunMonteCarloLHS(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
-        self.catchment = 'ExampleDaily'
-        self.root_f = 'examples/'
+        self.catchment = 'Catchment'
+        self.root_f = 'data/'
         self.sample_size = 5
         self.parallel = 'seq'
         self.save_sim = True
