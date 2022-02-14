@@ -40,7 +40,6 @@ setup(
         'Development Status :: 4 - Beta',
         'Natural Language :: English',
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',
         'Topic :: Scientific/Engineering :: Hydrology',
         'Operating System :: MacOS',
         'Operating System :: Microsoft :: Windows',
@@ -49,7 +48,6 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: Implementation :: CPython'
     ],
     packages=find_packages(exclude=["docs*"]),
     install_requires=requirements('requirements.txt'),
