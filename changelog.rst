@@ -5,6 +5,10 @@ latest
 
 Yet to be versioned and released. Only available from *dev* branch until then.
 
+.. rubric:: General
+
+* drop support for Python 2.7.x
+
 .. rubric:: Big fixes
 
 * fix bug in output writing for `montecarlo` due to change in behaviour in `spotpy`
