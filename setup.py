@@ -1,5 +1,5 @@
 # Copyright (C) 2018-2022  Thibault Hallouin
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open("README.rst", "r") as fh:
@@ -53,7 +53,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython'
     ],
-    packages=['smartpy', 'smartpy.montecarlo', 'examples'],
+    packages=find_packages(exclude=["docs*"]),
     install_requires=requirements('requirements.txt'),
     extras_require={
         'with_netcdf': ['netCDF4'],
