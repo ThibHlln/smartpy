@@ -39,8 +39,8 @@ jobs:
 
       - name: install package dependencies
         run: |
-          mamba install mpi4py
-          mamba install spotpy>=1.5.14
+          mamba install -c conda-forge netCDF4
+          mamba install -c conda-forge spotpy>=1.5.14
           mamba install --file=requirements.txt
 
       - name: install package
