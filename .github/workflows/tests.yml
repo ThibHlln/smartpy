@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [add-actions-workflow]
+    branches: [dev]
   pull_request:
     types: [ready_for_review]
 
