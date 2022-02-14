@@ -26,6 +26,7 @@ Yet to be versioned and released. Only available from *dev* branch until then.
 .. rubric:: Tests
 
 * add GitHub workflow to run tests
+  (`#4 <https://github.com/thibhlln/smartpy/pull/4>`_)
 
 
 v0.2.1
