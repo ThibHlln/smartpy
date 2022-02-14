@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -29,10 +27,85 @@ from .structure import run
 
 
 class SMART(object):
+    """SMART is the core object to set up and use to run an experiment."""
     def __init__(self, catchment, catchment_area_m2, start, end,
                  time_delta_simu, time_delta_save, warm_up_days,
                  in_format, out_format, root,
                  gauged_area_m2=None):
+        """**Instantiation**
+
+        :Parameters:
+
+            catchment: `str`
+                A name to identify the catchment of interest in the
+                inputs and outputs directories.
+
+            catchment_area_m2: `float`
+                The drainage area for the *catchment* of interest in
+                square metres.
+
+            start, end: `datetime.datetime`
+                The start and end of the simulation period, respectively.
+
+            time_delta_simu: `datetime.timedelta`
+                The simulation time step, i.e. the temporal resolution
+                for the model integration.
+
+            time_delta_save: `datetime.timedelta`
+                The reporting time step, i.e. the temporal resolution
+                for the model outputs.
+
+                .. warning::
+
+                   This must be an integer multiple of *time_delta_simu*.
+
+            warm_up_days: `int`
+                The number of simulation days to use in the simulation
+                period to warm up/spin up the model.
+
+            in_format: `str`
+                The input file format. It can either be `'csv'` or
+                `'netcdf'`.
+
+                .. warning::
+
+                   In either case, a specific file format must be followed.
+
+            out_format: `str`
+                The output file format. It can either be `'csv'` or
+                `'netcdf'`.
+
+            root: `str`
+                The file path to the directory containing the model
+                inputs and outputs. Note that a specific internal
+                structure for this directory must be followed:
+
+                .. code-block:: text
+
+                   root
+                   ├── in
+                   │   └── catchment
+                   │       ├── catchment.rain
+                   │       ├── catchment.peva
+                   │       ├── catchment.flow
+                   │       └── catchment.parameters
+                   └── out
+
+                .. note::
+
+                   While these input files feature custom filename extensions
+                   (e.g. *.rain*, *.peva*, etc.), these are no more than CSV
+                   files that can be opened with any basic text editor.
+
+            gauged_area_m2: `float`, optional
+                The gauged drainage area for the *catchment* of interest
+                in square metres. If provided, this value is used to
+                proportionally rescale the river discharge observations
+                in view to evaluate the model simulations against these.
+                If not provided, set to default value `None` (i.e. the
+                observations are not read in by the model).
+
+        """
         # general information
         self.catchment = catchment
         self.area = catchment_area_m2
@@ -71,6 +144,7 @@ class SMART(object):
         # optional extra information for setting up initial levels in reservoirs
         self.extra = None
         # parameters
+        #: Return the set of SMART model parameters as a `parameters.Parameters` object.
         self.parameters = Parameters()
         # model outputs
         self.outputs = None
@@ -78,6 +152,55 @@ class SMART(object):
         self.gw_contribution = None
 
     def simulate(self, param, report='summary'):
+        """Run model simulation over period configuration at instantiation.
+
+        :Parameters:
+
+            param: `dict`
+                The set of SMART model parameter values to use for the
+                simulation. This can be retrieved from the `SMART` model
+                instance via `{smart_instance}.parameters.values` or
+                directly given as a Python dictionary.
+
+                *Parameter example:* ::
+
+                    param={
+                        'T': 1.0,
+                        'C': 1.0,
+                        'H': 0.20845,
+                        'D': 0.24606,
+                        'S': 0.0001230,
+                        'Z': 105.26,
+                        'SK': 46.82,
+                        'FK': 315.55,
+                        'GK': 1066.73,
+                        'RK': 10.64
+                    }
+
+            report: `str`, optional
+                The processing to perform if the simulation resolution
+                resolution is greater than the recording resolution
+                (i.e. when *time_delta_save* >  *time_delta_simu*).
+                The options are:
+
+                ==============  ========================================
+                `'summary'`     The average of the simulated discharge
+                                values covering the reporting time step
+                                is taken. For instance, with hourly
+                                simulations and daily outputs, an
+                                average of the 24 hourly values is
+                                computed for each day.
+                `'raw'`         The last simulated discharge value in
+                                the reporting time step is taken. For
+                                instance, with hourly simulations and
+                                daily outputs, only the 24\ :sup:`th`
+                                hourly value (i.e. the last one) is
+                                retained for each day.
+                ==============  ========================================
+
+                If not provided, set to default value `'summary'`.
+
+        """
         nd_parameters = np.array([param[name] for name in self.parameters.names])
         self.outputs = run(self.area, self.delta_simu, self.nd_rain, self.nd_peva,
                            nd_parameters, self.extra, self.timeseries, self.timeseries_report,
@@ -87,6 +210,30 @@ class SMART(object):
         return self.outputs
 
     def write_output_files(self, which='both', parallel=False):
+        """Record the discharge time series in output file(s).
+
+        :Parameters:
+
+            which: `str`
+                The discharge time series to record in output files.
+                The options are:
+
+                ===============  =======================================
+                `'modelled'`     Only record the simulated time series.
+                `'observed'`     Only record the observed time series.
+                `'both'`         Record the simulated and the observed
+                                 time series.
+                ===============  =======================================
+
+                If not provided, set to default value `'both`.
+
+            parallel: `bool`, optional
+                Whether to open the output files with parallel I/O
+                enabled. This option is only applicable for NetCDf
+                output files. If not provided, set to default value
+                `False` (i.e. not enabling parallel I/O).
+
+        """
         if (which == 'both') or (which == 'modelled'):
             if self.nd_discharge is not None:
                 write_flow_file_from_nds(self.timeseries_report[1:], self.nd_discharge,
@@ -106,6 +253,10 @@ class SMART(object):
                                 "assigned to the gauged_area_m2 attribute of the SMART class instance.")
 
     def get_simulation_array(self):
+        """Retrieve the simulated discharge time series as an array.
+
+        :Returns: `numpy.ndarray`
+        """
         if self.nd_discharge is not None:
             return self.nd_discharge
         else:
@@ -113,6 +264,12 @@ class SMART(object):
                             "method of your SMART instance before requesting this output array.")
 
     def get_evaluation_array(self):
+        """Retrieve the observed discharge time series as an array.
+
+        Note that missing observations are set as `numpy.nan`.
+
+        :Returns: `numpy.ndarray`
+        """
         if self.nd_flow is not None:
             return self.nd_flow
         else:

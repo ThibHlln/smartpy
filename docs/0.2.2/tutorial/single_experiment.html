@@ -1,0 +1,505 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Single experiment &#8212; smartpy v0.2.2 documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet" />
+  <link href="../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.1c5a1a01449ed65a7b51.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="canonical" href="https://thibhlln.github.io/smartpy/tutorial/single_experiment.html" />
+    <link rel="shortcut icon" href="../_static/smartpy-favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Monte Carlo experiment" href="montecarlo_experiment.html" />
+    <link rel="prev" title="Tutorial" href="../tutorial.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+    <div id="navbar-start">
+      <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="navbar-brand" href="../index.html">
+              <img src="../_static/smartpy-logo.svg" class="logo" alt="logo">
+            </a>
+          </li>
+      </ul>
+    </div>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    
+    <div id="navbar-menu" class=" collapse navbar-collapse">
+      <ul class="navbar-nav mr-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              v0.2.2
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="version-menu">
+              
+                <a class="dropdown-item" href="https://thibhlln.github.io/smartpy">latest</a>
+              
+                <a class="dropdown-item" href="https://thibhlln.github.io/smartpy/0.2.2">v0.2.2</a>
+              
+            </div>
+          </li>
+      </ul>
+
+      <ul id="navbar-main-elements" class="navbar-nav mr-auto">
+        <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../installation.html">
+  Installation
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="../tutorial.html">
+  Tutorial
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../api_reference.html">
+  API Reference
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../model_description.html">
+  Model Description
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../citation.html">
+  Citation
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../support.html">
+  Support
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../changelog.html">
+  Change Log
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../licence.html">
+  Licence
+ </a>
+</li>
+
+        
+      </ul>
+
+      <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/thibhlln/smartpy" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+      </ul>
+    </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Single experiment
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="montecarlo_experiment.html">
+   Monte Carlo experiment
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setting-up">
+   Setting up
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#creating-an-instance-of-the-smart-class">
+     Creating an instance of the SMART class
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#giving-parameter-values-to-the-model-instance">
+     Giving parameter values to the model instance
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#defining-the-initial-conditions">
+     Defining the initial conditions
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#simulating">
+   Simulating
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#retrieving-the-outputs">
+   Retrieving the outputs
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#writing-the-outputs-to-file">
+   Writing the outputs to file
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#retrieving-the-outputs-as-arrays">
+   Retrieving the outputs as arrays
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#post-processing-example">
+   Post-processing (example)
+  </a>
+ </li>
+</ul>
+
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <div class="section" id="single-experiment">
+<h1>Single experiment<a class="headerlink" href="#single-experiment" title="Permalink to this headline"><span class="fa fa-link"></a></h1>
+<div class="section" id="setting-up">
+<h2>Setting up<a class="headerlink" href="#setting-up" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p>After having installed <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> (following the
+<a class="reference external" href="https://ncas-cms.github.io/cfunits/installation.html" title="(in Python cfunits package v3.3.4)"><span class="xref std std-doc">installation</span></a> instructions), the first thing that
+needs to be done is to import the <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> package to start using its
+modules, classes, and functions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">smartpy</span>
+</pre></div>
+</div>
+<div class="section" id="creating-an-instance-of-the-smart-class">
+<h3>Creating an instance of the SMART class<a class="headerlink" href="#creating-an-instance-of-the-smart-class" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<p>Then, you need to create an instance of the class SMART for the catchment
+you desire to model. By doing so, all the input data will be collected
+from the input files. All arguments are mandatory except <em>gauged_area_m2</em>.
+If <em>gauged_area_m2</em> is provided, it means that discharge measurements are
+available, and <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> is expecting a <em>.flow</em> file in the input folder.
+These measurements can be used later on in post-processing to evaluate
+the performance of the simulation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="n">sm</span> <span class="o">=</span> <span class="n">smartpy</span><span class="o">.</span><span class="n">SMART</span><span class="p">(</span>
+    <span class="n">catchment</span><span class="o">=</span><span class="s1">&#39;ExampleDaily&#39;</span><span class="p">,</span>
+    <span class="n">catchment_area_m2</span><span class="o">=</span><span class="mf">175.46e6</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s1">&#39;01/01/2007 09:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">/%m/%Y %H:%M:%S&#39;</span><span class="p">),</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s1">&#39;31/12/2016 09:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">/%m/%Y %H:%M:%S&#39;</span><span class="p">),</span>
+    <span class="n">time_delta_simu</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">time_delta_save</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">warm_up_days</span><span class="o">=</span><span class="mi">365</span><span class="p">,</span>
+    <span class="n">in_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+    <span class="n">out_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+    <span class="n">root</span><span class="o">=</span><span class="s1">&#39;examples/&#39;</span><span class="p">,</span>
+    <span class="n">gauged_area_m2</span><span class="o">=</span><span class="mf">175.97e6</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/classes/smartpy.SMART.html#smartpy.SMART" title="smartpy.SMART"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.SMART</span></code></a></p>
+</div>
+</div>
+<div class="section" id="giving-parameter-values-to-the-model-instance">
+<h3>Giving parameter values to the model instance<a class="headerlink" href="#giving-parameter-values-to-the-model-instance" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<p>Now it is time to give the model its parameter values. The recommended
+way to go is to use a file containing the parameter values, following
+the template in the example file used for this tutorial. The given values
+will be accessible in the attribute <code class="xref py py-obj docutils literal notranslate"><span class="pre">{SMART_instance}.parameters.values</span></code>
+(where <em>SMART_instance</em> is <code class="xref py py-obj docutils literal notranslate"><span class="pre">sm</span></code> in this tutorial, that it is to say the
+name binding to the instance of SMART used).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">set_parameters_with_file</span><span class="p">(</span><span class="s1">&#39;examples/in/ExampleDaily/ExampleDaily.parameters&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Alternatively, you can avoid the creation of a <em>.parameters</em> file and
+directly provide them as a dictionary, as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">set_parameters_with_dict</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="mf">0.20845</span><span class="p">,</span>
+        <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="mf">0.24606</span><span class="p">,</span>
+        <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="mf">0.0001230</span><span class="p">,</span>
+        <span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="mf">105.26</span><span class="p">,</span>
+        <span class="s1">&#39;SK&#39;</span><span class="p">:</span> <span class="mf">46.82</span><span class="p">,</span>
+        <span class="s1">&#39;FK&#39;</span><span class="p">:</span> <span class="mf">315.55</span><span class="p">,</span>
+        <span class="s1">&#39;GK&#39;</span><span class="p">:</span> <span class="mf">1066.73</span><span class="p">,</span>
+        <span class="s1">&#39;RK&#39;</span><span class="p">:</span> <span class="mf">10.64</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/methods/smartpy.parameters.Parameters.set_parameters_with_file.html#smartpy.parameters.Parameters.set_parameters_with_file" title="smartpy.parameters.Parameters.set_parameters_with_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.parameters.Parameters.set_parameters_with_file</span></code></a>,
+<a class="reference internal" href="../api/methods/smartpy.parameters.Parameters.set_parameters_with_dict.html#smartpy.parameters.Parameters.set_parameters_with_dict" title="smartpy.parameters.Parameters.set_parameters_with_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.parameters.Parameters.set_parameters_with_dict</span></code></a></p>
+</div>
+</div>
+<div class="section" id="defining-the-initial-conditions">
+<h3>Defining the initial conditions<a class="headerlink" href="#defining-the-initial-conditions" title="Permalink to this headline"><span class="fa fa-link"></a></h3>
+<p>If not initialised, the model states (i.e. levels of soil moisture layers,
+and levels of linear reservoirs) are set to zero (i.e. empty), which will
+give poor streamflow predictions for the beginning of your simulation
+period. It is good practice to use a warm-up period to initialise the model
+states. This is readily available with <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code>, and we have already defined
+a duration for it in this tutorial (i.e. 365 days) when creating our SMART
+instance with its <em>warm_up_days</em> parameter. If this duration is not set
+to zero, <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> will use the first X days (here the first 365 days) of
+the model input time series (i.e. precipitation and potential
+evapotranspiration) to run the model for the given duration prior the
+<em>start</em> date of the simulation in order to start the actual simulation
+with model layers and reservoirs that are not empty (the last levels of
+the warm-up period are used as the assumed initial levels for the
+simulation period).</p>
+<p>If one does not want to proceed this way, it is possible to set the warm-up
+period to 0 days. In this case, the model states are set to zero, and it is
+suggested that the user includes the warm-up period as part of the simulation
+period, and discards this period in the model outputs afterwards.</p>
+<p>In addition to the warm-up period, <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> has an additional feature to
+avoid starting with empty layers and reservoirs. This one is usable if the
+user has some general information about the hydrology in their catchment:</p>
+<ul class="simple">
+<li><p><em>aar</em>: an estimate of the annual average rainfall in millimetres,</p></li>
+<li><p><em>r-o_ratio</em>: an estimate of the runoff ratio,</p></li>
+<li><p><em>r-o_split</em>: an estimate of the runoff split between overland flow/drain
+flow/interflow/shallow groundwater flow/deep ground water flow.</p></li>
+</ul>
+<p>If this is the case, <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> will estimate the model states from this
+information to make an “educated guess” of the levels of the soil layers
+and the routing reservoirs. The information can be provided to the model
+as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">extra</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;aar&#39;</span><span class="p">:</span> <span class="mi">1200</span><span class="p">,</span>
+    <span class="s1">&#39;r-o_ratio&#39;</span><span class="p">:</span> <span class="mf">0.45</span><span class="p">,</span>
+    <span class="s1">&#39;r-o_split&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This option is more advanced. If the user has access to accurate estimates
+for these values, they may prefer to use this option as initialisation
+method in place of a warm-up period, or in addition to the warm-up period.</p>
+</div>
+</div>
+</div>
+<div class="section" id="simulating">
+<h2>Simulating<a class="headerlink" href="#simulating" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p>The SMART instance has now all it needs to start the simulation for the
+catchment over the time period set up. One last instruction and the
+simulation will be under way. The method simulate needs to be given
+the parameter values, they are directly accessible from the SMART
+instance attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/methods/smartpy.SMART.simulate.html#smartpy.SMART.simulate" title="smartpy.SMART.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.SMART.simulate</span></code></a></p>
+</div>
+</div>
+<div class="section" id="retrieving-the-outputs">
+<h2>Retrieving the outputs<a class="headerlink" href="#retrieving-the-outputs" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p>The outputs provided by <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> are the simulated streamflow series and
+the observed streamflow series. The latter is provided if and only if the
+<em>gauged_area_m2</em> was provided in the SMART instance. If this is the case,
+the <em>.flow</em> file provided in the input folder has already been read and
+the data is directly available from the SMART instance (see below).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In cases where <em>catchment_area_m2</em> and <em>gauged_area_m2</em> are different,
+the observed streamflow series provided in the the <em>.flow</em> file is
+rescaled accordingly assuming proportionality.</p>
+</div>
+</div>
+<div class="section" id="writing-the-outputs-to-file">
+<h2>Writing the outputs to file<a class="headerlink" href="#writing-the-outputs-to-file" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p>If one wants to save the model outputs in files for later use. This can
+be done using the following instruction:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">write_output_files</span><span class="p">(</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../api/methods/smartpy.SMART.write_output_files.html#smartpy.SMART.write_output_files" title="smartpy.SMART.write_output_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy.SMART.write_output_files</span></code></a></p>
+</div>
+<p>The <em>which</em> argument can take the value ‘modelled’, ‘observed’, or ‘both’,
+to write the simulated streamflow series, the observed streamflow series,
+or both series, respectively. The format of the files used is the one
+provided in the <em>out_format</em> attribute of the SMART instance (either ‘csv’
+or ‘netcdf’).</p>
+</div>
+<div class="section" id="retrieving-the-outputs-as-arrays">
+<h2>Retrieving the outputs as arrays<a class="headerlink" href="#retrieving-the-outputs-as-arrays" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p>If one wants to directly get the model outputs in the current Python session,
+two getter methods of the SMART instance are available to do so:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">evaluation</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_evaluation_array</span><span class="p">()</span>
+<span class="n">simulation</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_simulation_array</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="post-processing-example">
+<h2>Post-processing (example)<a class="headerlink" href="#post-processing-example" title="Permalink to this headline"><span class="fa fa-link"></a></h2>
+<p>The evaluation and simulation arrays returned have the same length.
+However, it is frequent to have days with missing discharge measurements,
+that would have been absent from the <em>.flow</em> file provided in the input
+folder. <code class="xref py py-obj docutils literal notranslate"><span class="pre">smartpy</span></code> assigned a <a class="reference external" href="https://numpy.org/doc/stable/reference/constants.html#numpy.nan" title="(in NumPy v1.22)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.nan</span></code></a> (not a number) value for any day
+with missing data, this is why the two arrays have the same length in the
+model outputs. However, when comparing them using an objective function,
+only days with available observations can be used. To deal with this, a
+suggested solution is as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">evaluation</span><span class="p">)</span>
+<span class="n">evaluation</span> <span class="o">=</span> <span class="n">evaluation</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+<span class="n">simulation</span> <span class="o">=</span> <span class="n">simulation</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Now that the arrays have no missing value, but still the same length,
+they can be compared using any objective function. A suggested approach
+is to use the <code class="xref py py-obj docutils literal notranslate"><span class="pre">hydroeval</span></code> Python package (<a class="reference external" href="https://thibhlln.github.io/hydroeval">https://thibhlln.github.io/hydroeval</a>)
+to get access to some of the most commonly used objective functions in hydrology:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">hydroeval</span>
+
+<span class="c1"># calculate the Nash-Sutcliffe efficiency</span>
+<span class="n">nse</span> <span class="o">=</span> <span class="n">hydroeval</span><span class="o">.</span><span class="n">evaluator</span><span class="p">(</span><span class="n">hydroeval</span><span class="o">.</span><span class="n">nse</span><span class="p">,</span> <span class="n">simulation</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">)</span>
+
+<span class="c1"># calculate the original Kling-Gupta efficiency</span>
+<span class="n">kge</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">hydroeval</span><span class="o">.</span><span class="n">evaluator</span><span class="p">(</span><span class="n">hydroeval</span><span class="o">.</span><span class="n">kge</span><span class="p">,</span> <span class="n">simulation</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This example uses made-up data, this is why the efficiency of the model
+simulation is low, e.g. with an NSE value is of 0.39.</p>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.1c5a1a01449ed65a7b51.js"></script>
+
+  <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    <div class="footer-item">
+      <p class="copyright">
+            &copy; Copyright 2018-2022, Thibault Hallouin.
+      </p>
+    </div>
+    <div class="footer-item">
+      <p class="sphinx-version">
+        Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.
+        Last updated on Feb 14, 2022.<br>
+      </p>
+    </div>
+  </div>
+</footer>
+  </body>
+</html>

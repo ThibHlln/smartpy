@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -37,7 +35,7 @@ except ImportError:
     Dataset = None
 
 from ..smart import SMART
-from ..inout import get_dict_simulation_settings, open_csv_rb, open_csv_wb
+from ..inout import get_dict_simulation_settings
 from ..objfunctions import groundwater_constraint
 from ..version import __version__
 
@@ -123,7 +121,7 @@ class MonteCarlo(object):
                                 "please install it and retry, or choose another file format.")
 
         else:  # fall back on to default option (CSV file)
-            self.database = open_csv_wb(self.db_file)
+            self.database = open(self.db_file, 'w', newline='', encoding='utf8')
             simu_steps = [dt.strftime('%Y-%m-%d %H:%M:%S') for dt in self.model.flow] if self.save_sim else []
             # write header in database file
             self.database.write(','.join(self.obj_fn_names + self.param_names + simu_steps) + '\n')
@@ -132,10 +130,27 @@ class MonteCarlo(object):
         return spotpy.parameter.generate(self.params)
 
     def run(self, compression=None):
+        """Run the simulations for the sample of parameter sets.
+
+        :Parameters:
+
+            compression: `bool` or `int`
+                Whether the sample output file should be compressed.
+                If the output file format is `'csv'`, a `bool` is
+                expected (`True` if compression is requested). If the
+                output file format is `'netcdf'`, a `bool` or an `int`
+                is expected to determine the *complevel* of the Python
+                package `netCDF4` which ranges between 1 and 9 (if
+                `True`, set to compression level of 6, if `int` is
+                provided, the integer value is the *complevel*). If
+                not provided, set to default value `None` (i.e. no
+                compression is performed).
+
+        """
         # initialise the database (either CSV file or NETCDF file)
         self._init_db()
         # run the Monte Carlo simulation
-        sampler = spotpy.algorithms.mc(self, parallel=self.parallel)
+        sampler = spotpy.algorithms.mc(self, dbformat='custom', parallel=self.parallel)
         sampler.sample(len(self.p_map))
         self.database.close()
         # if compression argument given, the file created will be compressed
@@ -237,7 +252,7 @@ class MonteCarlo(object):
                         params.append([row[param] for param in param_names])
             # collect parameter values and objective function values from CSV
             else:
-                with open_csv_rb(file_location) as my_file:
+                with open(file_location, 'r', encoding='utf8') as my_file:
                     my_reader = DictReader(my_file)
                     obj_fns, params = list(), list()
                     for row in my_reader:

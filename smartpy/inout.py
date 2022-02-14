@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -23,8 +21,6 @@ from csv import DictReader, writer
 from datetime import datetime, timedelta
 import numpy as np
 from collections import OrderedDict
-import sys
-import io
 import argparse
 try:
     from netCDF4 import Dataset
@@ -34,27 +30,6 @@ except ImportError:
 from .timeframe import get_required_resolution, check_interval_in_list, \
     rescale_time_resolution_of_irregular_mean_data, rescale_time_resolution_of_regular_cumulative_data
 from .version import __version__
-
-
-def open_csv_rb(my_file):
-    if sys.version_info[0] < 3:
-        return io.open(my_file, 'rb')
-    else:
-        return io.open(my_file, 'r', encoding='utf8')
-
-
-def open_csv_wb(my_file):
-    if sys.version_info[0] < 3:
-        return io.open(my_file, 'wb')
-    else:
-        return io.open(my_file, 'w', newline='', encoding='utf8')
-
-
-def open_csv_ab(my_file):
-    if sys.version_info[0] < 3:
-        return io.open(my_file, 'ab')
-    else:
-        return io.open(my_file, 'a', newline='', encoding='utf8')
 
 
 def get_dict_rain_series_simu(file_location, file_format, start_simu, end_simu, time_delta_simu):
@@ -202,7 +177,7 @@ def read_flow_file(file_location, file_format):
 def read_simulation_settings_file(file_location):
     my_dict_args = dict()
     try:
-        with open_csv_rb(file_location) as my_file:
+        with open(file_location, 'r', encoding='utf8') as my_file:
             my_reader = DictReader(my_file)
             for row in my_reader:
                 my_dict_args[row['ARGUMENT']] = row['VALUE']
@@ -216,7 +191,7 @@ def read_simulation_settings_file(file_location):
 
 def read_csv_time_series_with_delta_check(csv_file, key_header, val_header):
     try:
-        with open_csv_rb(csv_file) as my_file:
+        with open(csv_file, 'r', encoding='utf8') as my_file:
             my_dict_data = dict()
             my_list_dt = list()
             my_reader = DictReader(my_file)
@@ -258,7 +233,7 @@ def read_netcdf_time_series_with_delta_check(netcdf_file, key_variable, val_vari
 
 def read_csv_time_series_with_missing_check(csv_file, key_header, val_header):
     try:
-        with open_csv_rb(csv_file) as my_file:
+        with open(csv_file, 'r', encoding='utf8') as my_file:
             my_dict_data = OrderedDict()
             my_reader = DictReader(my_file)
             try:
@@ -314,7 +289,7 @@ def write_flow_file_from_nds(series_report, discharge, the_file, out_file_format
 
 
 def write_flow_csv_file_from_nds(series_report, discharge, csv_file):
-    with open_csv_wb(csv_file) as my_file:
+    with open(csv_file, 'w', newline='', encoding='utf8') as my_file:
         my_writer = writer(my_file, delimiter=',')
         my_writer.writerow(['DateTime', 'flow'])
         for dt, val in zip(series_report, discharge):

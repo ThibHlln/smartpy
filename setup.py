@@ -1,66 +1,60 @@
-# -*- coding: utf-8 -*-
-# Copyright (C) 2018  Thibault Hallouin
-from setuptools import setup
+# Copyright (C) 2018-2022  Thibault Hallouin
+from setuptools import setup, find_packages
 
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_desc = fh.read()
 
 with open('smartpy/version.py') as fv:
     exec(fv.read())
 
+
+def requirements(filename):
+    requires = []
+    with open(filename, 'r') as fr:
+        for line in fr:
+            package = line.strip()
+            if package:
+                requires.append(package)
+
+    return requires
+
+
 setup(
     name='smartpy',
-
     version=__version__,
-
-    description='SMARTpy: an open-source rainfall-runoff model in Python',
+    description='An implementation of the rainfall-runoff model SMART in Python',
     long_description=long_desc,
-    long_description_content_type="text/markdown",
-
-    url='https://github.com/ThibHlln/smartpy',
-
+    long_description_content_type="text/x-rst",
+    download_url="https://pypi.python.org/pypi/smartpy",
+    project_urls={
+        'Bug Tracker': 'https://github.com/thibhlln/smartpy/issues',
+        'User Support': 'https://github.com/thibhlln/smartpy/discussions',
+        'Documentation': 'https://thibhlln.github.io/smartpy',
+        'Source Code': 'https://github.com/thibhlln/smartpy',
+    },
     author='Thibault Hallouin, Eva Mockler, and Michael Bruen',
-    author_email='thibault.hallouin@ucdconnect.ie',
-
-    license='GPLv3',
-
+    author_email='thibhlln@gmail.com',
+    license='GPL-3.0',
     classifiers=[
         'Development Status :: 4 - Beta',
-
         'Natural Language :: English',
-
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',
         'Topic :: Scientific/Engineering :: Hydrology',
-
         'Operating System :: MacOS',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
-
-
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: Implementation :: CPython'
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
-
-    packages=['smartpy', 'smartpy.montecarlo', 'examples'],
-
-    install_requires=[
-        'numpy>=1.16',
-        'scipy',
-        'future'
-    ],
-
+    packages=find_packages(exclude=["docs*"]),
+    install_requires=requirements('requirements.txt'),
     extras_require={
         'with_netcdf': ['netCDF4'],
-        'with_spotpy': ['spotpy>=1.3.27'],
+        'with_spotpy': ['spotpy>=1.5.14'],
         'with_smartcpp': ['smartcpp'],
-        'with_all_extras': ['netCDF4', 'spotpy', 'smartcpp']
+        'with_all_extras': ['netCDF4', 'spotpy>=1.5.14', 'smartcpp']
     }
 )

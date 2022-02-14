@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of SMARTpy - An open-source rainfall-runoff model in Python
-# Copyright (C) 2018  Thibault Hallouin (1)
+# Copyright (C) 2018-2022  Thibault Hallouin (1)
 #
 # (1) Dooge Centre for Water Resources Research, University College Dublin, Ireland
 #
@@ -30,9 +28,153 @@ from .montecarlo import MonteCarlo
 
 
 class GLUE(MonteCarlo):
+    """GLUE is the available to condition a sample of parameter sets
+    using a Generalized Likelihood Uncertainty Estimation (GLUE) approach
+    (`Beven and Binley (1992) <https://doi.org/10.1002/HYP.3360060305>`_,
+    `Beven and Freer (2001) <https://doi.org/10.1016/S0022-1694(01)00421-8>`_,
+    `Beven and Binley (2014) <https://doi.org/10.1002/hyp.10082>`_). That
+    is to say elicit which parameter sets in a sample are "behavioural"
+    or not, based on some likelihood measure.
+
+    .. important::
+
+       A sampling must have already been performed prior to using this
+       functionality, and the conditioned sample is then used to run
+       the model on a different simulation period than the sampling
+       simulation period.
+
+    """
     def __init__(self, catchment, root_f, in_format, out_format,
                  conditioning,
-                 parallel='seq', save_sim=False, settings_filename=None, decompression_csv=False):
+                 parallel='seq', save_sim=False, settings_filename=None,
+                 decompression_csv=False):
+        """**Instantiation**
+
+        :Parameters:
+
+            catchment: `str`
+                A name to identify the catchment of interest in the
+                inputs and outputs directories.
+
+            root_f: `str`
+                The file path to the directory containing the model
+                inputs and outputs. Note that a specific internal
+                structure for this directory must be followed:
+
+                .. code-block:: text
+
+                   root_f
+                   ├── in
+                   │   └── catchment
+                   │       ├── catchment.rain
+                   │       ├── catchment.peva
+                   │       ├── catchment.flow
+                   │       └── catchment.sttngs
+                   └── out
+
+            in_format: `str`
+                The input file format. It can either be `'csv'` or
+                `'netcdf'`. Note that in either case, a specific file
+                format must be followed.
+
+            out_format: `str`
+                The output file format. It can either be `'csv'` or
+                `'netcdf'`.
+
+            conditioning: `dict`
+                The set of conditions to use to consider a parameter set
+                as "behavioural" gathered in a dictionary. The objective
+                functions to choose from as likelihood measures are:
+
+                =========  ====================================================
+                'NSE'      `Nash Sutcliffe Efficiency
+                           <https://doi.org/10.1016/0022-1694(70)90255-6>`_.
+                'KGE'      `Kling-Gupta Efficiency
+                           <https://doi.org/10.1016/j.jhydrol.2009.08.003>`_.
+                'KGEc'     *r* component of `Kling-Gupta Efficiency
+                           <https://doi.org/10.1016/j.jhydrol.2009.08.003>`_.
+                'KGEa'     *alpha* component of `Kling-Gupta Efficiency
+                           <https://doi.org/10.1016/j.jhydrol.2009.08.003>`_.
+                'KGEb'     *beta* component of `Kling-Gupta Efficiency
+                           <https://doi.org/10.1016/j.jhydrol.2009.08.003>`_.
+                'PBias'    Percent bias.
+                'RMSE'     Root mean square error.
+                'GW'       Groundwater contribution to runoff. This is a
+                           specific objective function for the SMART model.
+                           This objective function acts as a filter to
+                           eliminate parameter sets who produce ratios of
+                           groundwater runoff, shallow and deep, over total
+                           runoff that are not within :math:`\pm` 10% of
+                           the observed/expected value. The objective
+                           function evaluates as one when this is the
+                           case, and as zero when this is not (i.e.
+                           eliminated).
+                =========  ====================================================
+
+                *Parameter example:* ::
+
+                    conditioning={
+                        'GW': ['equal', (1,)],  # GW = 1
+                        'NSE': ['min', (0.8,)]  # NSE >= 0.8
+                        'PBias': ['max', (10,)],  # PBias <= 10%
+                    }
+
+                *Parameter example:* ::
+
+                    conditioning={
+                        'PBias': ['inside', (-10, 10)],  # -10% <= PBias <= 10%
+                        'KGE': ['min', (0.6,)]  # KGE >= 0.6
+                    }
+
+                .. warning::
+
+                   Depending on the conditions chosen, this may yield no
+                   "behavioural" parameter set.
+
+            parallel: `str`, optional
+                Whether the sampling is to performed in parallel (i.e.
+                using MPI calls to run several simulations at the same
+                time), or in serial (i.e. running simulations sequentially
+                one after another). The options are:
+
+                ===============  =======================================
+                Parallel         Description
+                ===============  =======================================
+                `'seq'`          Run the simulations one after another.
+                `'mpi'`          Run several simulations at the same
+                                 time. The number of simultaneous
+                                 simulations is determined with the
+                                 number of processes using `mpirun -np`.
+                ===============  =======================================
+
+                If not provided, set to default value `'seq'`.
+
+            save_sim: `bool`, optional
+                Whether to save the simulated discharge time series. If
+                not provided, set to default value `False` (i.e. the
+                simulated values are not recorded). Note that the sampled
+                parameter values as well as a bundle of objective
+                functions are always recorded in the sampling output
+                file regardless of this argument.
+
+            settings_filename: `str`, optional
+                The name of the settings file to use to configure the
+                SMART model. This argument is to be used when the
+                settings file does not follow the specific file name
+                expected by the model, i.e. *{root_f}/in/{catchment}.sttngs*.
+                If not provided, set to the specific file name expected.
+                Note that regardless of this argument, the settings file
+                must be in the inputs folder for the given catchment
+                (in other words, absolute paths are not supported here).
+
+            decompression_csv: `bool`, optional
+                Whether the CSV files containing the sample of parameter
+                sets is compressed or not. If it is, this must be set to
+                `True` to decompress the CSV file as a pre-processing
+                step. If not provided, set to default vaalue `False` (i.e.
+                no decompression).
+
+        """
         MonteCarlo.__init__(self, catchment, root_f, in_format, out_format,
                             parallel=parallel, save_sim=save_sim, func='glue', settings_filename=settings_filename)
 

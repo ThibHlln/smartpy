@@ -1,0 +1,8 @@
+# this directory is required to run some of the unittests
+# so it needs to exist in the repository when unittests are to be run
+# but any file ever created in this directory is of no interest
+
+# so ignore everything in this directory
+*
+# except this file
+!.gitignore

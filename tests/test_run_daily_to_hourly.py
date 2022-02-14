@@ -8,7 +8,7 @@ class TestRunDaily2Hourly(unittest.TestCase):
 
     def setUp(self):
         self.sm = smartpy.SMART(
-            catchment='ExampleDaily',
+            catchment='Catchment',
             catchment_area_m2=175.46 * 1E6,
             start=datetime.strptime('01/01/2007 09:00:00', '%d/%m/%Y %H:%M:%S'),
             end=datetime.strptime('31/12/2016 09:00:00', '%d/%m/%Y %H:%M:%S'),
@@ -17,11 +17,15 @@ class TestRunDaily2Hourly(unittest.TestCase):
             warm_up_days=365,
             in_format='csv',
             out_format='csv',
-            root="examples/",
+            root="data/",
             gauged_area_m2=175.97 * 1E6
         )
 
-        self.sm.extra = {'aar': 1200, 'r-o_ratio': 0.45, 'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)}
+        self.sm.extra = {
+            'aar': 1200,
+            'r-o_ratio': 0.45,
+            'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)
+        }
 
         self.expected_outcome = {
             datetime.strptime('2007-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'): 4.1350823716e+00,
@@ -140,4 +144,15 @@ class TestRunDaily2Hourly(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    test_loader = unittest.TestLoader()
+    test_suite = unittest.TestSuite()
+
+    test_suite.addTests(
+        test_loader.loadTestsFromTestCase(TestRunDaily2Hourly)
+    )
+
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(test_suite)
+
+    if not result.wasSuccessful():
+        exit(1)
