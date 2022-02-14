@@ -21,7 +21,11 @@ class TestRunDaily2Hourly(unittest.TestCase):
             gauged_area_m2=175.97 * 1E6
         )
 
-        self.sm.extra = {'aar': 1200, 'r-o_ratio': 0.45, 'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)}
+        self.sm.extra = {
+            'aar': 1200,
+            'r-o_ratio': 0.45,
+            'r-o_split': (0.10, 0.15, 0.15, 0.30, 0.30)
+        }
 
         self.expected_outcome = {
             datetime.strptime('2007-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'): 4.1350823716e+00,
@@ -140,4 +144,15 @@ class TestRunDaily2Hourly(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    test_loader = unittest.TestLoader()
+    test_suite = unittest.TestSuite()
+
+    test_suite.addTests(
+        test_loader.loadTestsFromTestCase(TestRunDaily2Hourly)
+    )
+
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(test_suite)
+
+    if not result.wasSuccessful():
+        exit(1)
