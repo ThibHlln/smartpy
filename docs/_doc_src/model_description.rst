@@ -62,7 +62,8 @@ Model inputs and outputs
    ===============  =====================================  ====================
    Output           Description                            Unit
    ===============  =====================================  ====================
-   :math:`Q`        River discharge                        kg m\ :sup:`-3`
+   :math:`Q`        River discharge                        m\ :sup:`-3`
+                                                           s\ :sup:`-1`
    :math:`E_A`      Actual evapotranspiration              mm per time step
    ===============  =====================================  ====================
 
