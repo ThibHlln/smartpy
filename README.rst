@@ -10,7 +10,7 @@ An implementation of the rainfall-runoff model SMART in Python
 .. image:: https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square
    :target: https://www.gnu.org/licenses/gpl-3.0
    :alt: Licence GPL-3.0
-.. image:: https://img.shields.io/github/workflow/status/ThibHlln/smartpy/Tests?style=flat-square&label=tests
+.. image:: https://img.shields.io/github/actions/workflow/status/thibhlln/smartpy/tests.yml?style=flat-square&label=tests
    :target: https://github.com/ThibHlln/smartpy/actions/workflows/tests.yml
    :alt: Tests Status
 
