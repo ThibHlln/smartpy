@@ -35,12 +35,19 @@ Conceptual model
 ----------------
 
 .. _fig_structure:
-.. figure:: ../_doc_img/smart-model-structure.svg
+.. figure:: ../_doc_img/smart-model-structure-light.svg
+   :class: only-light
    :align: center
    :alt: SMART model structure
 
    Fig. 1: Conceptual representation of the bucket-type rainfall-runoff model SMART.
 
+.. figure:: ../_doc_img/smart-model-structure-dark.svg
+   :class: only-dark
+   :align: center
+   :alt: SMART model structure
+
+   Fig. 1: Conceptual representation of the bucket-type rainfall-runoff model SMART.
 
 Model inputs and outputs
 ````````````````````````
