@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2022  Thibault Hallouin
+# Copyright (C) 2018-2025  Thibault Hallouin
 from setuptools import setup, find_packages
 
 
