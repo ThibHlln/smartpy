@@ -20,9 +20,56 @@ def run(
         shallow_gw_flux, deep_gw_flux,
         overland_runoff_flux, drain_runoff_flux,
         inter_runoff_flux, shallow_gw_runoff_flux,
+        deep_gw_runoff_flux,
+        # number of timesteps
+        nt
+):
+    for i in range(nt):
+        update(
+            # inputs
+            rainfall_flux[i:i+1], potential_evapotranspiration_flux[i:i+1],
+            # parameters
+            theta_t, theta_c, theta_h, theta_d, theta_s,
+            theta_z, theta_sk, theta_fk, theta_gk, theta_rk,
+            # states
+            soil_layers_amounts[i:i+2], overland_reservoir_amount[i:i+2],
+            drain_reservoir_amount[i:i+2], inter_reservoir_amount[i:i+2],
+            shallow_gw_reservoir_amount[i:i+2], deep_gw_reservoir_amount[i:i+2],
+            river_reservoir_amount[i:i+2],
+            # constants
+            timedelta, drainage_area, rho_water,
+            # outputs
+            actual_evapotranspiration_flux[i:i+1], river_discharge_flux[i:i+1],
+            # internals
+            shallow_gw_flux, deep_gw_flux,
+            overland_runoff_flux, drain_runoff_flux,
+            inter_runoff_flux, shallow_gw_runoff_flux,
+            deep_gw_runoff_flux
+        )
+
+
+def update(
+        # inputs
+        rainfall_flux, potential_evapotranspiration_flux,
+        # parameters
+        theta_t, theta_c, theta_h, theta_d, theta_s,
+        theta_z, theta_sk, theta_fk, theta_gk, theta_rk,
+        # states
+        soil_layers_amounts, overland_reservoir_amount,
+        drain_reservoir_amount, inter_reservoir_amount,
+        shallow_gw_reservoir_amount, deep_gw_reservoir_amount,
+        river_reservoir_amount,
+        # constants
+        timedelta, drainage_area, rho_water,
+        # outputs
+        actual_evapotranspiration_flux, river_discharge_flux,
+        # internals
+        shallow_gw_flux, deep_gw_flux,
+        overland_runoff_flux, drain_runoff_flux,
+        inter_runoff_flux, shallow_gw_runoff_flux,
         deep_gw_runoff_flux
 ):
-    run_production(
+    _update_production(
         rainfall_flux, potential_evapotranspiration_flux,
         theta_t, theta_c, theta_h, theta_d, theta_s,
         theta_z, theta_sk, theta_fk, theta_gk,
@@ -36,7 +83,7 @@ def run(
         shallow_gw_flux, deep_gw_flux
     )
 
-    run_routing(
+    _update_routing(
         overland_runoff_flux, drain_runoff_flux, inter_runoff_flux,
         shallow_gw_runoff_flux, deep_gw_runoff_flux,
         theta_rk,
@@ -45,7 +92,7 @@ def run(
         river_discharge_flux
     )
 
-def run_production(
+def _update_production(
         # inputs
         rainfall_flux,
         potential_evapotranspiration_flux,
@@ -312,7 +359,7 @@ def run_production(
     )
     deep_gw_reservoir_amount[1, ...] *= deep_gw_reservoir_amount[1] > 0
 
-def run_routing(
+def _update_routing(
         # inputs
         overland_runoff_flux,
         drain_runoff_flux,

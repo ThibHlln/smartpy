@@ -1,0 +1,135 @@
+{
+  "inputs": {
+    "rainfall_flux": {
+      "description": "liquid precipitation flux",
+      "units": "kg m-2 s-1"
+    },
+    "potential_evapotranspiration_flux": {
+      "description": "potential evapotranspiration flux",
+      "units": "kg m-2 s-1"
+    }
+  },
+  "parameters": {
+    "theta_t": {
+      "name": "T",
+      "description": "rainfall aerial correction factor",
+      "units": "1"
+    },
+    "theta_c": {
+      "name": "C",
+      "description": "evaporation decay coefficient",
+      "units": "1"
+    },
+    "theta_h": {
+      "name": "H",
+      "description": "quick runoff ratio",
+      "units": "1"
+    },
+    "theta_d": {
+      "name": "D",
+      "description": "drain flow ratio",
+      "units": "1"
+    },
+    "theta_s": {
+      "name": "S",
+      "description": "soil outflow coefficient",
+      "units": "1"
+    },
+    "theta_z": {
+      "name": "Z",
+      "description": "effective soil depth",
+      "units": "kg m-2"
+    },
+    "theta_sk": {
+      "name": "SK",
+      "description": "surface reservoir residence time",
+      "units": "s"
+    },
+    "theta_fk": {
+      "name": "FK",
+      "description": "interflow reservoir residence time",
+      "units": "s"
+    },
+    "theta_gk": {
+      "name": "GK",
+      "description": "groundwater reservoir residence time",
+      "units": "s"
+    },
+    "theta_rk": {
+      "name": "RK",
+      "description": "channel reservoir residence time",
+      "units": "s"
+    }
+  },
+  "states": {
+    "soil_layers_amounts": {
+      "units": "kg m-2",
+      "divisions": 6
+    },
+    "overland_reservoir_amount": {
+      "units": "kg m-2"
+    },
+    "drain_reservoir_amount": {
+      "units": "kg m-2"
+    },
+    "inter_reservoir_amount": {
+      "units": "kg m-2"
+    },
+    "shallow_gw_reservoir_amount": {
+      "units": "kg m-2"
+    },
+    "deep_gw_reservoir_amount": {
+      "units": "kg m-2"
+    },
+    "river_reservoir_amount": {
+      "units": "kg m-2"
+    }
+  },
+  "constants": {
+    "timedelta": {
+      "description": "duration between two simulation time steps",
+      "units": "s"
+    },
+    "drainage_area": {
+      "description": "basin drainage area",
+      "units": "m2"
+    },
+    "rho_water": {
+      "description": "volumetric mass density of liquid water",
+      "units": "kg m-3"
+    }
+  },
+  "outputs": {
+    "actual_evapotranspiration_flux": {
+      "description": "actual evapotranspiration flux",
+      "units": "kg m-2 s-1"
+    },
+    "river_discharge_flux": {
+      "description": "streamflow at the basin outlet",
+      "units": "kg m-2 s-1"
+    }
+  },
+  "internals": {
+    "shallow_gw_flux": {
+      "units": "kg m-2 s-1"
+    },
+    "deep_gw_flux": {
+      "units": "kg m-2 s-1"
+    },
+    "overland_runoff_flux": {
+      "units": "kg m-2 s-1"
+    },
+    "drain_runoff_flux": {
+      "units": "kg m-2 s-1"
+    },
+    "inter_runoff_flux": {
+      "units": "kg m-2 s-1"
+    },
+    "shallow_gw_runoff_flux": {
+      "units": "kg m-2 s-1"
+    },
+    "deep_gw_runoff_flux": {
+      "units": "kg m-2 s-1"
+    }
+  }
+}
