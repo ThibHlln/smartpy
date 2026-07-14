@@ -8,7 +8,9 @@ from ._run import run
 from ._finalise import finalise
 
 
-def _assign_df_index(df: pd.DataFrame, var: str, regex: str, dtypes: list):
+def _assign_df_index(
+        df: pd.DataFrame, var: str, regex: str, dtypes: list
+) -> pd.DataFrame:
     # try to assign index if not already
     if isinstance(df.index, pd.RangeIndex):
         # try to guess names column
@@ -41,7 +43,7 @@ def _assign_df_index(df: pd.DataFrame, var: str, regex: str, dtypes: list):
     return df
 
 
-def _resample_timeseries(df, idx):
+def _resample_observations(df, idx) -> pd.DataFrame:
     # TODO: functional but a bit slow to run, find a faster approach
 
     # target intervals (assumed regular)
@@ -82,7 +84,7 @@ def _resample_timeseries(df, idx):
 
 def _process_df_timeseries(
         df: pd.DataFrame, var: str, target_index: pd.DatetimeIndex = None
-):
+) -> pd.DataFrame:
     # check type
     if not isinstance(df, pd.DataFrame):
         raise TypeError(
@@ -100,7 +102,7 @@ def _process_df_timeseries(
 
     # in case of observed data, resample onto forcing index
     if target_index is not None:
-        df = _resample_timeseries(df, target_index)
+        df = _resample_observations(df, target_index)
 
     # convert [kg m-2 timedelta-1] into [kg m-2 s-1]
     deltas = df.index.diff()[1:]
@@ -116,7 +118,7 @@ def _process_df_timeseries(
     return df
 
 
-def _process_df_parameters(df: pd.DataFrame):
+def _process_df_parameters(df: pd.DataFrame) -> pd.DataFrame:
     # check type
     if not isinstance(df, pd.DataFrame):
         raise TypeError(
@@ -141,7 +143,7 @@ def _process_df_parameters(df: pd.DataFrame):
     return df
 
 
-def _get_number_basins(**kwargs):
+def _get_number_basins(**kwargs) -> int:
     # get number of columns
     n_cols = {var: df.shape[1] for var, df in kwargs.items()}
 
