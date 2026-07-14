@@ -1,10 +1,11 @@
+import os
 import json
 import numpy as np
 import pandas as pd
 
-from _initialise import initialise
-from _run import run
-from _finalise import finalise
+from ._initialise import initialise
+from ._run import run
+from ._finalise import finalise
 
 
 def _assign_df_index(df: pd.DataFrame, var: str, regex: str, dtypes: list):
@@ -154,7 +155,9 @@ def _get_number_basins(**kwargs):
 
 class Model(object):
 
-    with open('model.json', 'r') as f:
+    app_path = os.path.dirname(__file__)
+
+    with open(os.path.join(app_path, 'model.json'), 'r') as f:
         _meta = json.load(f)
 
     def __init__(
