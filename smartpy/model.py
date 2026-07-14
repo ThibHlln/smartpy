@@ -227,8 +227,12 @@ class Model(object):
 
     def simulate(
             self, parameters: pd.DataFrame,
-            start: str | pd.Timestamp = None, end: str | pd.Timestamp = None
+            start: str | pd.Timestamp = None, end: str | pd.Timestamp = None,
+            istart: str | pd.Timestamp = None, iend: str | pd.Timestamp = None,
+            _spinup: bool = False
     ):
+        dtype = np.float64
+
         # gather inputs for relevant period
         inputs = {
             'rainfall_flux':
@@ -237,6 +241,23 @@ class Model(object):
                 self.pet.loc[start:end, :].values
         }
         nt = inputs['rainfall_flux'].shape[0]
+
+        # allocate memory for states
+        states = {
+            name: np.zeros(
+                (nt + 1, self.nx) if 'divisions' not in attrs else
+                (nt + 1, self.nx, attrs['divisions']),
+                dtype=dtype
+            ) for name, attrs in self._meta['states'].items()
+        }
+
+        # spin up to set initial conditions
+        if istart is not None and iend is not None:
+            istates = self.simulate(
+                parameters, istart, iend, _spinup=True
+            )
+            for name, attrs in self._meta['states'].items():
+                states[name][0, ...] = istates[name][-1, ...]
 
         # gather parameter values
         parameters = _process_df_parameters(parameters)
@@ -256,15 +277,7 @@ class Model(object):
                 1e3
         }
 
-        # allocate memory for states and outputs
-        dtype = np.float64
-        states = {
-            name: np.zeros(
-                (nt + 1, self.nx) if 'divisions' not in attrs else
-                (nt + 1, self.nx, attrs['divisions']),
-                dtype=dtype
-            ) for name, attrs in self._meta['states'].items()
-        }
+        # allocate memory for outputs
         outputs = {
             name: np.zeros((nt, self.nx), dtype=dtype)
             for name, attrs in self._meta['outputs'].items()
@@ -275,8 +288,6 @@ class Model(object):
             name: np.zeros((1, self.nx), dtype=dtype)
             for name, attrs in self._meta['internals'].items()
         }
-
-        # TODO: implement initialisation period (i.e. spin up/warm up)
 
         # call initialise/run/finalise functions
         initialise(
@@ -290,6 +301,8 @@ class Model(object):
 
         return {
             name: outputs[name] for name, attrs in self._meta['outputs'].items()
+        } if not _spinup else {
+            name: states[name] for name, attrs in self._meta['states'].items()
         }
 
 
@@ -328,7 +341,8 @@ if __name__ == '__main__':
     r = m.simulate(
         # my_df_params,
         pd.concat([df_params] * 5, ignore_index=True, axis=1),
-        start='2000-01-01', end='2003-12-31'
+        start='2003-01-01', end='2006-12-31',
+        istart='2000-01-01', iend='2002-12-31'
     )
 
     print(r['river_discharge_flux'])
