@@ -10,10 +10,11 @@ def initialise(
         shallow_gw_reservoir_amount, deep_gw_reservoir_amount,
         river_reservoir_amount,
         # constants
-        timedelta, drainage_area, rho_water,
+        timedelta, drainage_area, rho_water
 ):
     # initialise soil layers to be half-full
-    soil_layers_amounts[0] = theta_z / 6. / 2.
+    for i in range(6):
+        soil_layers_amounts[0, ..., i] = theta_z / 6. / 2.
 
     # initialise linear reservoirs with following assumptions:
     # - 1200mm/yr of annual average rainfall

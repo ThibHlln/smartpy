@@ -136,6 +136,9 @@ def _update_production(
     is_energy_limited = rainfall_minus_evapotranspiration_flux > 0.0
     is_water_limited = ~is_energy_limited
 
+    # calculate total antecedent soil moisture
+    soil_amount = np.sum(soil_layers_amounts[0, ...], axis=-1)
+
     # ------------------------------------------------------------------
     # under energy-limited conditions
     # >>> --------------------------------------------------------------
@@ -156,7 +159,6 @@ def _update_production(
     )
 
     # provisionally set soil evaporation as total available moisture
-    soil_amount = np.sum(soil_layers_amounts[0], axis=-1) * theta_z
     max_soil_evaporation_flux = np.where(
         is_water_limited, soil_amount / timedelta, 0.0
     )
@@ -186,9 +188,6 @@ def _update_production(
     # ------------------------------------------------------------------
     # under energy-limited conditions
     # >>> --------------------------------------------------------------
-
-    # calculate total antecedent soil moisture
-    soil_amount = np.sum(soil_layers_amounts[0, ...], axis=-1)
 
     # calculate surface runoff using quick runoff parameter H and
     # relative soil moisture content

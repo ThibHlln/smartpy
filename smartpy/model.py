@@ -225,26 +225,29 @@ class Model(object):
         else:
             self._flow = None
 
-    def simulate(self, parameters: pd.DataFrame, start, end):
-        kwargs = {}
-
+    def simulate(
+            self, parameters: pd.DataFrame,
+            start: str | pd.Timestamp = None, end: str | pd.Timestamp = None
+    ):
         # gather inputs for relevant period
-        kwargs |= {
+        inputs = {
             'rainfall_flux':
                 self.rain.loc[start:end, :].values,
             'potential_evapotranspiration_flux':
                 self.pet.loc[start:end, :].values
         }
-        nt = kwargs['rainfall_flux'].shape[0]
+        nt = inputs['rainfall_flux'].shape[0]
 
         # gather parameter values
         parameters = _process_df_parameters(parameters)
         _ = _get_number_basins(rain=self.rain, parameters=parameters)
-        for name, attrs in self._meta['parameters'].items():
-            kwargs[name] = parameters.loc[attrs['name']].values
+        parameters = {
+            name: parameters.loc[attrs['name']].values
+            for name, attrs in self._meta['parameters'].items()
+        }
 
         # gather constants values
-        kwargs |= {
+        constants = {
             'timedelta':
                 self.timedelta,
             'drainage_area':
@@ -255,34 +258,38 @@ class Model(object):
 
         # allocate memory for states and outputs
         dtype = np.float64
-        for name, attrs in self._meta['states'].items():
-            kwargs[name] = np.zeros(
+        states = {
+            name: np.zeros(
                 (nt + 1, self.nx) if 'divisions' not in attrs else
                 (nt + 1, self.nx, attrs['divisions']),
                 dtype=dtype
-            )
-        for name, attrs in self._meta['outputs'].items():
-            kwargs[name] = np.zeros(
-                (nt, self.nx),
-                dtype=dtype
-            )
+            ) for name, attrs in self._meta['states'].items()
+        }
+        outputs = {
+            name: np.zeros((nt, self.nx), dtype=dtype)
+            for name, attrs in self._meta['outputs'].items()
+        }
 
         # create placeholders for internals
-        for name, attrs in self._meta['internals'].items():
-            kwargs[name] = np.zeros(
-                (1, self.nx),
-                dtype=dtype
-            )
+        internals = {
+            name: np.zeros((1, self.nx), dtype=dtype)
+            for name, attrs in self._meta['internals'].items()
+        }
 
-        # include number of time steps
-        kwargs['nt'] = nt
-
-        # TODO: also call initialise and finalise functions
         # TODO: implement initialisation period (i.e. spin up/warm up)
-        run(**kwargs)
+
+        # call initialise/run/finalise functions
+        initialise(
+            **parameters, **states, **constants
+        )
+        run(
+            **inputs, **parameters, **states, **constants,
+            **internals, **outputs, nt=nt
+        )
+        finalise()
 
         return {
-            name: kwargs[name] for name, attrs in self._meta['outputs'].items()
+            name: outputs[name] for name, attrs in self._meta['outputs'].items()
         }
 
 
@@ -309,7 +316,7 @@ if __name__ == '__main__':
         rain=pd.concat([df_rain] * 5, ignore_index=True, axis=1),
         pet=pd.concat([df_pet] * 5, ignore_index=True, axis=1),
         area=[100] * 5,
-        flow=pd.concat([df_flow] * 5, ignore_index=True, axis=1)
+        # flow=pd.concat([df_flow] * 5, ignore_index=True, axis=1)
     )
 
     # TODO: check that a Monte Carlo simulation works with broadcasting
