@@ -104,7 +104,7 @@ def _process_df_timeseries(
     if target_index is not None:
         df = _resample_observations(df, target_index)
 
-    # convert [kg m-2 timedelta-1] into [kg m-2 s-1]
+    # convert [kg m-2 timedelta-1] into [kg m-2 s-1] in case of forcing data
     deltas = df.index.diff()[1:]
     if deltas.min() != deltas.max():
         raise RuntimeError(
@@ -116,6 +116,88 @@ def _process_df_timeseries(
         df = df / deltas[0].total_seconds()
 
     return df
+
+
+def _resample_timeseries(
+        df: pd.DataFrame, freq: str | pd.Timedelta, var: str,
+        cumulative: bool = False
+) -> pd.DataFrame:
+    # collect data frequency
+    src_freq = pd.infer_freq(df.index)
+    if src_freq is None:
+        raise ValueError(f"cannot infer {var!r} frequency")
+
+    # convert frequencies to offsets
+    src_offset = pd.tseries.frequencies.to_offset(src_freq)
+    dst_offset = pd.tseries.frequencies.to_offset(freq)
+
+    # check that destination frequency is constant
+    # (i.e. MS/ME, YS/YE not supported)
+    try:
+        _ = dst_offset.nanos
+    except ValueError:
+        raise RuntimeError(
+            "only constant frequencies are supported (e.g. 'D', 'h', 'min')"
+        )
+
+    error = (
+        f"cannot resample incompatible frequencies (not multiple): "
+        f"{src_offset!r} -> {dst_offset!r}"
+    )
+
+    if dst_offset.nanos < src_offset.nanos:
+        # check compatibility
+        if src_offset.nanos % dst_offset.nanos != 0:
+            raise RuntimeError(error)
+
+        # upsample
+        factor = src_offset.nanos / dst_offset.nanos
+
+        new_index = pd.date_range(
+            start=df.index[0] - src_offset + dst_offset,
+            end=df.index[-1],
+            freq=freq,
+        )
+
+        limit = int(factor) - 1
+
+        return (
+            df.reindex(new_index, method="bfill", limit=limit).div(factor)
+            if cumulative
+            else df.reindex(new_index, method="bfill", limit=limit)
+        )
+
+    else:
+        # check compatibility
+        if dst_offset.nanos % src_offset.nanos != 0:
+            raise RuntimeError(error)
+
+        # downsample
+        offset = df.index[-1] - df.index[-1].normalize()
+
+        # shift to make sure not ignoring/hiding potential offset
+        shifted = df.shift(freq=-offset)
+
+        # resample to required frequency
+        result = (
+            shifted.resample(freq, label="right", closed="right")
+            .agg('sum' if cumulative else 'mean')
+        )
+
+        # check that all timestamps were available for given interval
+        counts = (
+            shifted.resample(freq, label="right", closed="right")
+            .count()
+        )
+        expected = dst_offset.nanos // src_offset.nanos
+        result[counts < expected] = np.nan
+
+        # unshift to bring back original offset
+        result = result.shift(freq=offset)
+
+        # make sure shifting did not append extra head/tail timestamps
+        return result.loc[df.index[0]:df.index[-1]]
+
 
 
 def _process_df_parameters(df: pd.DataFrame) -> pd.DataFrame:
@@ -233,17 +315,29 @@ class Model(object):
     def simulate(
             self, parameters: pd.DataFrame,
             start: str | pd.Timestamp = None, end: str | pd.Timestamp = None,
+            frequency: str | pd.Timedelta = None,
             istart: str | pd.Timestamp = None, iend: str | pd.Timestamp = None,
             _spinup: bool = False
     ):
         dtype = np.float64
 
-        # gather inputs for relevant period
+        # gather inputs for relevant period (and optionally resample)
+        rain = (
+            _resample_timeseries(
+                self.rain.loc[start:end, :], frequency, 'rain',cumulative=True
+            ) if frequency is not None
+            else self.rain.loc[start:end, :]
+        )
+        pet = (
+            _resample_timeseries(
+                self.pet.loc[start:end, :], frequency, 'pet', cumulative=True
+            ) if frequency is not None
+            else self.pet.loc[start:end, :]
+        )
+
         inputs = {
-            'rainfall_flux':
-                self.rain.loc[start:end, :].values,
-            'potential_evapotranspiration_flux':
-                self.pet.loc[start:end, :].values
+            'rainfall_flux': rain.values,
+            'potential_evapotranspiration_flux': pet.values
         }
         nt = inputs['rainfall_flux'].shape[0]
 
@@ -259,7 +353,7 @@ class Model(object):
         # spin up to set initial conditions
         if istart is not None and iend is not None:
             istates = self.simulate(
-                parameters, istart, iend, _spinup=True
+                parameters, istart, iend, frequency, _spinup=True
             )
             for name, attrs in self._meta['states'].items():
                 states[name][0, ...] = istates[name][-1, ...]
@@ -304,50 +398,28 @@ class Model(object):
         )
         finalise()
 
+
+        def resample(arr, name):
+            shape = arr.shape
+            # flatten to turn into dataframe
+            df = pd.DataFrame(
+                arr.reshape(shape[0], -1),
+                index=rain.index
+            )
+            # resample to forcing data resolution
+            df = _resample_timeseries(
+                df, pd.infer_freq(self.rain.loc[start:end, :].index), name
+            )
+            # turn back into array and unflatten to restore original shape
+            return df.to_numpy().reshape((len(df),) + shape[1:])
+
+
+        # return outputs or states depending on type of run (main or spinup)
         return {
-            name: outputs[name] for name, attrs in self._meta['outputs'].items()
+            # TODO: consider returning AET in [mm timedelta-1] not [kg m-2 s-1]
+            name: resample(outputs[name], name)
+            for name, attrs in self._meta['outputs'].items()
         } if not _spinup else {
-            name: states[name] for name, attrs in self._meta['states'].items()
+            name: states[name]
+            for name, attrs in self._meta['states'].items()
         }
-
-
-if __name__ == '__main__':
-    df_rain = pd.read_csv('../tests/data/in/Catchment/Catchment.rain')
-    df_rain = _process_df_timeseries(df_rain, 'rain')
-
-    df_pet = pd.read_csv('../tests/data/in/Catchment/Catchment.peva')
-    df_pet = _process_df_timeseries(df_pet, 'pet')
-
-    df_flow = pd.read_csv('../tests/data/in/Catchment/Catchment.flow', index_col=0)
-    # df_flow = _process_df_timeseries(df_flow, 'flow', target_index=df_rain.index)
-
-    # # single basin
-    # m = Model(
-    #     rain=df_rain,
-    #     pet=df_pet,
-    #     area=1,
-    #     flow=df_flow
-    # )
-
-    # multiple basins
-    m = Model(
-        rain=pd.concat([df_rain] * 5, ignore_index=True, axis=1),
-        pet=pd.concat([df_pet] * 5, ignore_index=True, axis=1),
-        area=[100] * 5,
-        # flow=pd.concat([df_flow] * 5, ignore_index=True, axis=1)
-    )
-
-    # TODO: check that a Monte Carlo simulation works with broadcasting
-    #       i.e. that by providing several parameters columns (sets)
-    #       it can produce as many outputs columns without having to
-    #       provide several inputs (forcings/observations) columns
-    df_params = pd.read_csv('../tests/data/in/Catchment/Catchment.parameters', index_col=0)
-
-    r = m.simulate(
-        # my_df_params,
-        pd.concat([df_params] * 5, ignore_index=True, axis=1),
-        start='2003-01-01', end='2006-12-31',
-        istart='2000-01-01', iend='2002-12-31'
-    )
-
-    print(r['river_discharge_flux'])
