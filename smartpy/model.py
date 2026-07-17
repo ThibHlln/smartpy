@@ -104,13 +104,14 @@ def _process_df_timeseries(
     if target_index is not None:
         df = _resample_observations(df, target_index)
 
-    # convert [kg m-2 timedelta-1] into [kg m-2 s-1] in case of forcing data
+    # check for constant frequency
     deltas = df.index.diff()[1:]
     if deltas.min() != deltas.max():
         raise RuntimeError(
             f"{var!r} data must feature a constant temporal frequency"
         )
 
+    # convert [kg m-2 timedelta-1] into [kg m-2 s-1] in case of forcing data
     if target_index is None:
         df = df.asfreq(deltas[0])
         df = df / deltas[0].total_seconds()
@@ -254,10 +255,6 @@ class Model(object):
         self.pet = pet
         if not self.rain.index.equals(self.pet.index):
             raise RuntimeError("'rain' and 'pet' time index are not equal")
-        else:
-            self.timedelta = (
-                    self.rain.index[1] - self.rain.index[0]
-            ).total_seconds()
 
         # assign basin(s) area(s)
         self.area = area
@@ -324,13 +321,13 @@ class Model(object):
         # gather inputs for relevant period (and optionally resample)
         rain = (
             _resample_timeseries(
-                self.rain.loc[start:end, :], frequency, 'rain',cumulative=True
+                self.rain.loc[start:end, :], frequency, 'rain'
             ) if frequency is not None
             else self.rain.loc[start:end, :]
         )
         pet = (
             _resample_timeseries(
-                self.pet.loc[start:end, :], frequency, 'pet', cumulative=True
+                self.pet.loc[start:end, :], frequency, 'pet'
             ) if frequency is not None
             else self.pet.loc[start:end, :]
         )
@@ -369,7 +366,7 @@ class Model(object):
         # gather constants values
         constants = {
             'timedelta':
-                self.timedelta,
+                (rain.index[1] - rain.index[0]).total_seconds(),
             'drainage_area':
                 self.area,
             'rho_water':

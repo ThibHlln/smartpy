@@ -17,7 +17,7 @@ def run(
         # outputs
         actual_evapotranspiration_flux, river_discharge_flux,
         # internals
-        shallow_gw_flux, deep_gw_flux,
+        soil_evaporation_amount, shallow_gw_amount, deep_gw_amount,
         overland_runoff_flux, drain_runoff_flux,
         inter_runoff_flux, shallow_gw_runoff_flux,
         deep_gw_runoff_flux,
@@ -41,7 +41,7 @@ def run(
             # outputs
             actual_evapotranspiration_flux[i:i+1], river_discharge_flux[i:i+1],
             # internals
-            shallow_gw_flux, deep_gw_flux,
+            soil_evaporation_amount, shallow_gw_amount, deep_gw_amount,
             overland_runoff_flux, drain_runoff_flux,
             inter_runoff_flux, shallow_gw_runoff_flux,
             deep_gw_runoff_flux
@@ -64,7 +64,7 @@ def update(
         # outputs
         actual_evapotranspiration_flux, river_discharge_flux,
         # internals
-        shallow_gw_flux, deep_gw_flux,
+        soil_evaporation_amount, shallow_gw_amount, deep_gw_amount,
         overland_runoff_flux, drain_runoff_flux,
         inter_runoff_flux, shallow_gw_runoff_flux,
         deep_gw_runoff_flux
@@ -80,7 +80,7 @@ def update(
         actual_evapotranspiration_flux, overland_runoff_flux,
         drain_runoff_flux, inter_runoff_flux, shallow_gw_runoff_flux,
         deep_gw_runoff_flux,
-        shallow_gw_flux, deep_gw_flux
+        soil_evaporation_amount, shallow_gw_amount, deep_gw_amount
     )
 
     _update_routing(
@@ -123,64 +123,22 @@ def _update_production(
         shallow_gw_runoff_flux,
         deep_gw_runoff_flux,
         # internals
-        shallow_gw_flux,
-        deep_gw_flux
+        soil_evaporation_amount,
+        shallow_gw_amount,
+        deep_gw_amount
 ):
     # apply parameter T to rainfall data (aerial rainfall correction)
     corrected_rainfall_flux = rainfall_flux * theta_t
 
     # determine limiting conditions
     rainfall_minus_evapotranspiration_flux = (
-            corrected_rainfall_flux - potential_evapotranspiration_flux
+        corrected_rainfall_flux - potential_evapotranspiration_flux
     )
     is_energy_limited = rainfall_minus_evapotranspiration_flux > 0.0
     is_water_limited = ~is_energy_limited
 
     # calculate total antecedent soil moisture
-    soil_amount = np.sum(soil_layers_amounts[0, ...], axis=-1)
-
-    # ------------------------------------------------------------------
-    # under energy-limited conditions
-    # >>> --------------------------------------------------------------
-
-    effective_rainfall_flux = np.where(
-        is_energy_limited, rainfall_minus_evapotranspiration_flux, 0.0
-    )
-
-    # -------------------------------------------------------------- <<<
-
-    # ------------------------------------------------------------------
-    # under water-limited conditions
-    # >>> --------------------------------------------------------------
-
-    # ignore cells where there is rain excess
-    unmet_evapotranspiration_flux = np.where(
-        is_water_limited, -rainfall_minus_evapotranspiration_flux, 0.0
-    )
-
-    # provisionally set soil evaporation as total available moisture
-    max_soil_evaporation_flux = np.where(
-        is_water_limited, soil_amount / timedelta, 0.0
-    )
-
-    # limit contribution to unmet ET where there is moisture excess
-    soil_evaporation_flux = np.where(
-        max_soil_evaporation_flux >= unmet_evapotranspiration_flux,
-        unmet_evapotranspiration_flux,
-        max_soil_evaporation_flux
-    )
-
-    # -------------------------------------------------------------- <<<
-
-    # calculate actual evapotranspiration
-    actual_evapotranspiration_flux[...] = np.where(
-        is_energy_limited,
-        potential_evapotranspiration_flux,
-        corrected_rainfall_flux + soil_evaporation_flux
-    )
-
-    # determine excess rain amount from effective rainfall flux
-    excess_rainfall_amount = effective_rainfall_flux * timedelta
+    soil_total_amount = np.sum(soil_layers_amounts[0, ...], axis=-1)
 
     # initialise current soil layers to their level at previous step
     soil_layers_amounts[1, ...] = soil_layers_amounts[0, ...]
@@ -188,31 +146,37 @@ def _update_production(
     # ------------------------------------------------------------------
     # under energy-limited conditions
     # >>> --------------------------------------------------------------
+    effective_rainfall_flux = np.where(
+        is_energy_limited, rainfall_minus_evapotranspiration_flux, 0.0
+    )
+
+    # determine excess rain amount from effective rainfall flux
+    excess_rainfall_amount = effective_rainfall_flux * timedelta
 
     # calculate surface runoff using quick runoff parameter H and
     # relative soil moisture content
-    theta_h_prime = theta_h * (soil_amount / theta_z)
+    theta_h_prime = theta_h * (soil_total_amount / theta_z)
     # excess rainfall contribution to quick surface runoff store
-    overland_flow = theta_h_prime * excess_rainfall_amount
+    overland_amount = theta_h_prime * excess_rainfall_amount
     # remainder that infiltrates
-    excess_rainfall_amount -= overland_flow
+    excess_rainfall_amount -= overland_amount
 
     # calculate percolation through soil layers
     # (from top layer [1st] to bottom layer [6th])
-    layer_capacity = theta_z / 6.
+    layer_max_amount = theta_z / 6.
     for i in range(6):
-        layer_level = soil_layers_amounts[1, ..., i]
+        layer_amount = soil_layers_amounts[1, ..., i]
 
         # determine space in layer before reaching full capacity
-        layer_space = layer_capacity - layer_level
+        layer_free_amount = layer_max_amount - layer_amount
 
-        has_enough_space = excess_rainfall_amount <= layer_space
+        has_enough_space = excess_rainfall_amount <= layer_free_amount
 
         # enough space in layer to hold entire excess rain
-        layer_level[...] = np.where(
+        layer_amount[...] = np.where(
             is_energy_limited & has_enough_space,
-            layer_level + excess_rainfall_amount,
-            layer_level
+            layer_amount + excess_rainfall_amount,
+            layer_amount
         )
         excess_rainfall_amount[...] = np.where(
             is_energy_limited & has_enough_space,
@@ -221,107 +185,141 @@ def _update_production(
         )
 
         # not enough space in layer to hold entire excess rain
-        layer_level[...] = np.where(
+        layer_amount[...] = np.where(
             is_energy_limited & ~has_enough_space,
-            layer_capacity,
-            layer_level
+            layer_max_amount,
+            layer_amount
         )
         excess_rainfall_amount[...] = np.where(
             is_energy_limited & ~has_enough_space,
-            excess_rainfall_amount - layer_space,
+            excess_rainfall_amount - layer_free_amount,
             excess_rainfall_amount
         )
 
     # calculate saturation excess from remaining excess rainfall
     # sat. excess contrib. (if not 0) to quicker soil runoff store
-    drain_flow = theta_d * excess_rainfall_amount
+    drain_amount = theta_d * excess_rainfall_amount
     # sat. excess contrib. (if not 0) to slower soil runoff store
-    inter_flux = (1.0 - theta_d) * excess_rainfall_amount
-
-    # -------------------------------------------------------------- <<<
+    inter_amount = (1.0 - theta_d) * excess_rainfall_amount
 
     # calculate leak from soil layers
     # (i.e. piston flow becoming active during rainfall events)
-    theta_s_prime = theta_s * (soil_amount / theta_z)
+    theta_s_prime = theta_s * (soil_total_amount / theta_z)
 
     # calculate soil moisture contributions to runoff stores
     for i in range(6):
-        layer_level = soil_layers_amounts[1, ..., i]
+        layer_amount = soil_layers_amounts[1, ..., i]
 
         # leak to interflow
-        leak_inter_flux = np.where(
+        leak_inter_amount = np.where(
             is_energy_limited,
             # soil moisture outflow reducing exponentially downwards
-            layer_level * (theta_s_prime ** (i + 1)),
+            layer_amount * (theta_s_prime ** (i + 1)),
             # no soil moisture contribution to runoff store
             0.
         )
-        inter_flux += leak_inter_flux
-        layer_level[...] = layer_level - leak_inter_flux
+        inter_amount += leak_inter_amount
+        layer_amount[...] = layer_amount - leak_inter_amount
+
+    shallow_gw_amount[:] = 0
+    for i in range(6):
+        layer_amount = soil_layers_amounts[1, ..., i]
 
         # leak to shallow groundwater flow
-        leak_shallow_gw_flux = np.where(
+        leak_shallow_gw_amount = np.where(
             is_energy_limited,
             # soil moisture outflow reducing linearly downwards
-            layer_level * (theta_s_prime / (i + 1)),
+            layer_amount * (theta_s_prime / (i + 1)),
             # no soil moisture contribution to runoff store
             0
         )
-        shallow_gw_flux += leak_shallow_gw_flux
-        layer_level[...] = layer_level - leak_shallow_gw_flux
+        shallow_gw_amount += leak_shallow_gw_amount
+        layer_amount[...] = layer_amount - leak_shallow_gw_amount
+
+    deep_gw_amount[:] = 0
+    for i in range(5, -1, -1):
+        layer_amount = soil_layers_amounts[1, ..., i]
 
         # leak to deep groundwater flow
-        leak_deep_gw_flux = np.where(
+        leak_deep_gw_amount = np.where(
             is_energy_limited,
             # soil moisture outflow reducing exponentially upwards
-            layer_level * (theta_s_prime ** (6 - i)),
+            layer_amount * (theta_s_prime ** (6 - i)),
             # no soil moisture contribution to runoff store
             0
         )
-        deep_gw_flux += leak_deep_gw_flux
-        layer_level[...] = layer_level - leak_deep_gw_flux
+        deep_gw_amount += leak_deep_gw_amount
+        layer_amount[...] = layer_amount - leak_deep_gw_amount
+
+    # -------------------------------------------------------------- <<<
 
     # ------------------------------------------------------------------
     # under water-limited conditions
     # >>> --------------------------------------------------------------
+    unmet_evapotranspiration_flux = np.where(
+        is_water_limited, -rainfall_minus_evapotranspiration_flux, 0.0
+    )
 
     # attempt to satisfy PE from soil layers
     # (from top layer [1st] to bottom layer [6th])
+    soil_evaporation_amount[:] = 0
     for i in range(6):
-        layer_level = soil_layers_amounts[1, ..., i]
+        layer_amount = soil_layers_amounts[1, ..., i]
 
-        enough_moisture = unmet_evapotranspiration_flux <= layer_level
+        enough_soil_moisture = (
+            unmet_evapotranspiration_flux * timedelta <= layer_amount
+        )
 
         # enough soil moisture in layer
-        layer_level[...] = np.where(
-            is_water_limited & enough_moisture,
-            layer_level - unmet_evapotranspiration_flux,
-            layer_level
+        layer_amount[...] = np.where(
+            is_water_limited & enough_soil_moisture,
+            layer_amount - unmet_evapotranspiration_flux * timedelta,
+            layer_amount
+        )
+        soil_evaporation_amount[...] = np.where(
+            is_water_limited & enough_soil_moisture,
+            soil_evaporation_amount
+            + unmet_evapotranspiration_flux * timedelta,
+            soil_evaporation_amount
         )
         unmet_evapotranspiration_flux[...] = np.where(
-            is_water_limited & enough_moisture,
+            is_water_limited & enough_soil_moisture,
             0.,
             unmet_evapotranspiration_flux
         )
 
         # not enough soil moisture in layer
-        layer_level[...] = np.where(
-            is_water_limited & ~enough_moisture,
-            0.,
-            layer_level
+        soil_evaporation_amount[...] = np.where(
+            is_water_limited & ~enough_soil_moisture,
+            soil_evaporation_amount + layer_amount / timedelta,
+            soil_evaporation_amount
         )
         unmet_evapotranspiration_flux[...] = np.where(
-            is_water_limited & ~enough_moisture,
-            theta_c * (unmet_evapotranspiration_flux - layer_level),
+            is_water_limited & ~enough_soil_moisture,
+            theta_c * (
+                unmet_evapotranspiration_flux - layer_amount / timedelta
+            ),
             unmet_evapotranspiration_flux
+        )
+        layer_amount[...] = np.where(
+            is_water_limited & ~enough_soil_moisture,
+            0.,
+            layer_amount
         )
 
     # -------------------------------------------------------------- <<<
 
+    # calculate actual evapotranspiration
+    actual_evapotranspiration_flux[...] = np.where(
+        is_energy_limited,
+        potential_evapotranspiration_flux,
+        corrected_rainfall_flux + soil_evaporation_amount * timedelta
+    )
+
     # route overland runoff
     overland_runoff_flux[...] = overland_reservoir_amount[0] / theta_sk
     overland_reservoir_amount[1, ...] = (
-        overland_reservoir_amount[0] + overland_flow
+        overland_reservoir_amount[0] + overland_amount
         - overland_runoff_flux * timedelta
     )
     overland_reservoir_amount[1, ...] *= overland_reservoir_amount[1] > 0
@@ -329,7 +327,7 @@ def _update_production(
     # route drain runoff
     drain_runoff_flux[...] = drain_reservoir_amount[0] / theta_sk
     drain_reservoir_amount[1, ...] = (
-        drain_reservoir_amount[0] + drain_flow
+        drain_reservoir_amount[0] + drain_amount
         - drain_runoff_flux * timedelta
     )
     drain_reservoir_amount[1, ...] *= drain_reservoir_amount[1] > 0
@@ -337,7 +335,7 @@ def _update_production(
     # route inter runoff
     inter_runoff_flux[...] = inter_reservoir_amount[0] / theta_fk
     inter_reservoir_amount[1, ...] = (
-        inter_reservoir_amount[0] + inter_flux
+        inter_reservoir_amount[0] + inter_amount
         - inter_runoff_flux * timedelta
     )
     inter_reservoir_amount[1, ...] *= inter_reservoir_amount[1] > 0
@@ -345,16 +343,16 @@ def _update_production(
     # route shallow groundwater runoff
     shallow_gw_runoff_flux[...] = shallow_gw_reservoir_amount[0] / theta_gk
     shallow_gw_reservoir_amount[1, ...] = (
-        shallow_gw_reservoir_amount[0] + shallow_gw_flux
-        - shallow_gw_runoff_flux * timedelta
+            shallow_gw_reservoir_amount[0] + shallow_gw_amount
+            - shallow_gw_runoff_flux * timedelta
     )
     shallow_gw_reservoir_amount[1, ...] *= shallow_gw_reservoir_amount[1] > 0
 
     # route deep groundwater runoff
     deep_gw_runoff_flux[...] = deep_gw_reservoir_amount[0] / theta_gk
     deep_gw_reservoir_amount[1, ...] = (
-        deep_gw_reservoir_amount[0] + deep_gw_flux
-        - deep_gw_runoff_flux * timedelta
+            deep_gw_reservoir_amount[0] + deep_gw_amount
+            - deep_gw_runoff_flux * timedelta
     )
     deep_gw_reservoir_amount[1, ...] *= deep_gw_reservoir_amount[1] > 0
 

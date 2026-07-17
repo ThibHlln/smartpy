@@ -110,11 +110,14 @@
     }
   },
   "internals": {
-    "shallow_gw_flux": {
-      "units": "kg m-2 s-1"
+    "soil_evaporation_amount" : {
+      "units": "kg m-2"
     },
-    "deep_gw_flux": {
-      "units": "kg m-2 s-1"
+    "shallow_gw_amount": {
+      "units": "kg m-2"
+    },
+    "deep_gw_amount": {
+      "units": "kg m-2"
     },
     "overland_runoff_flux": {
       "units": "kg m-2 s-1"
