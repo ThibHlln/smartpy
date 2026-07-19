@@ -92,6 +92,7 @@ def update(
         river_discharge_flux
     )
 
+
 def _update_production(
         # inputs
         rainfall_flux,
@@ -266,43 +267,43 @@ def _update_production(
     for i in range(6):
         layer_amount = soil_layers_amounts[1, ..., i]
 
-        enough_soil_moisture = (
+        has_enough_soil_moisture = (
             unmet_evapotranspiration_flux * timedelta <= layer_amount
         )
 
         # enough soil moisture in layer
         layer_amount[...] = np.where(
-            is_water_limited & enough_soil_moisture,
+            is_water_limited & has_enough_soil_moisture,
             layer_amount - unmet_evapotranspiration_flux * timedelta,
             layer_amount
         )
         soil_evaporation_amount[...] = np.where(
-            is_water_limited & enough_soil_moisture,
+            is_water_limited & has_enough_soil_moisture,
             soil_evaporation_amount
             + unmet_evapotranspiration_flux * timedelta,
             soil_evaporation_amount
         )
         unmet_evapotranspiration_flux[...] = np.where(
-            is_water_limited & enough_soil_moisture,
+            is_water_limited & has_enough_soil_moisture,
             0.,
             unmet_evapotranspiration_flux
         )
 
         # not enough soil moisture in layer
         soil_evaporation_amount[...] = np.where(
-            is_water_limited & ~enough_soil_moisture,
-            soil_evaporation_amount + layer_amount / timedelta,
+            is_water_limited & ~has_enough_soil_moisture,
+            soil_evaporation_amount + layer_amount,
             soil_evaporation_amount
         )
         unmet_evapotranspiration_flux[...] = np.where(
-            is_water_limited & ~enough_soil_moisture,
+            is_water_limited & ~has_enough_soil_moisture,
             theta_c * (
                 unmet_evapotranspiration_flux - layer_amount / timedelta
             ),
             unmet_evapotranspiration_flux
         )
         layer_amount[...] = np.where(
-            is_water_limited & ~enough_soil_moisture,
+            is_water_limited & ~has_enough_soil_moisture,
             0.,
             layer_amount
         )
@@ -313,7 +314,7 @@ def _update_production(
     actual_evapotranspiration_flux[...] = np.where(
         is_energy_limited,
         potential_evapotranspiration_flux,
-        corrected_rainfall_flux + soil_evaporation_amount * timedelta
+        corrected_rainfall_flux + soil_evaporation_amount / timedelta
     )
 
     # route overland runoff
@@ -322,7 +323,7 @@ def _update_production(
         overland_reservoir_amount[0] + overland_amount
         - overland_runoff_flux * timedelta
     )
-    overland_reservoir_amount[1, ...] *= overland_reservoir_amount[1] > 0
+    overland_reservoir_amount[1, ...] *= overland_reservoir_amount[1] >= 0
 
     # route drain runoff
     drain_runoff_flux[...] = drain_reservoir_amount[0] / theta_sk
@@ -330,7 +331,7 @@ def _update_production(
         drain_reservoir_amount[0] + drain_amount
         - drain_runoff_flux * timedelta
     )
-    drain_reservoir_amount[1, ...] *= drain_reservoir_amount[1] > 0
+    drain_reservoir_amount[1, ...] *= drain_reservoir_amount[1] >= 0
 
     # route inter runoff
     inter_runoff_flux[...] = inter_reservoir_amount[0] / theta_fk
@@ -338,7 +339,7 @@ def _update_production(
         inter_reservoir_amount[0] + inter_amount
         - inter_runoff_flux * timedelta
     )
-    inter_reservoir_amount[1, ...] *= inter_reservoir_amount[1] > 0
+    inter_reservoir_amount[1, ...] *= inter_reservoir_amount[1] >= 0
 
     # route shallow groundwater runoff
     shallow_gw_runoff_flux[...] = shallow_gw_reservoir_amount[0] / theta_gk
@@ -346,7 +347,7 @@ def _update_production(
             shallow_gw_reservoir_amount[0] + shallow_gw_amount
             - shallow_gw_runoff_flux * timedelta
     )
-    shallow_gw_reservoir_amount[1, ...] *= shallow_gw_reservoir_amount[1] > 0
+    shallow_gw_reservoir_amount[1, ...] *= shallow_gw_reservoir_amount[1] >= 0
 
     # route deep groundwater runoff
     deep_gw_runoff_flux[...] = deep_gw_reservoir_amount[0] / theta_gk
@@ -354,7 +355,8 @@ def _update_production(
             deep_gw_reservoir_amount[0] + deep_gw_amount
             - deep_gw_runoff_flux * timedelta
     )
-    deep_gw_reservoir_amount[1, ...] *= deep_gw_reservoir_amount[1] > 0
+    deep_gw_reservoir_amount[1, ...] *= deep_gw_reservoir_amount[1] >= 0
+
 
 def _update_routing(
         # inputs
@@ -392,7 +394,7 @@ def _update_routing(
     discharge_flux = np.where(
         reservoir_amount < 0,
         # allow max outflow at 95% of what was in store
-        0.95 * (total_runoff_flux + river_reservoir_amount[-1] / timedelta),
+        0.95 * (total_runoff_flux + river_reservoir_amount[0] / timedelta),
         discharge_flux
     )
     river_reservoir_amount[1, ...] = (
